@@ -108,6 +108,9 @@ All CTAs are **large and confident**. No small buttons for primary actions.
 
 **Content rule:** The page is about **Evertale** — a platform for personalized storybooks. Momotaro is only mentioned once, in the Story Preview section (Section 10), as "our first story." Every other section talks about "your child's storybook" generically. This keeps the brand scalable and the message clear.
 
+**How personalization works (internal context — informs copy, not shown verbatim):**
+From a single photo, we generate a **character sheet** — a set of illustrated poses, expressions, and angles of the child as a watercolor character. Multiple sheets can be created for different outfits or scenes throughout the story. These sheets are then used to populate every page of the book template. The result: a consistent, recognizable character across the entire story, not a one-off image.
+
 ---
 
 ### Section 1 — Navbar
@@ -138,8 +141,8 @@ H1: Your Child,
     the Hero of Every Story
 
 Subheadline:
-A personalized storybook where your child is the main character —
-illustrated from their photo, printed in hardcover, and kept forever.
+We turn a photo of your child into a storybook character —
+illustrated across every page, printed in hardcover, and kept forever.
 
 [Get Started — $39]          [See How It Works]
 ```
@@ -162,12 +165,12 @@ Eyebrow: "See the Difference"
 H2: From Photo to Storybook Character
 
 Subtext:
-Upload a photo. We create a watercolor character that actually looks like your child.
-Not a cartoon. Not a preset. Them.
+Upload a photo. We build a full character — expressions, poses, outfits —
+that looks like your child on every single page.
 ```
 
 **Each card:**
-- Side-by-side: photo left, illustrated character right
+- Left: child's photo. Right: a strip of 2–3 character sheet poses (different angles/expressions/outfits) showing the range.
 - `rounded-xl overflow-hidden`
 - Caption: `"Liam, age 4"` — `text-sm text-muted-foreground`
 - Grid: `grid-cols-1 md:grid-cols-3 gap-8`
@@ -202,13 +205,13 @@ H2: How It Works
 01  Upload a Photo
     A clear, recent photo of your child's face. That's all we need.
 
-02  We Illustrate Your Child
-    Our AI creates a watercolor character that captures their likeness —
-    features, expression, everything that makes them them.
+02  We Build Your Character
+    From your photo we create a full character sheet — poses, expressions,
+    and outfits — so your child looks like themselves on every page.
 
 03  They Star in the Story
-    Your child becomes the hero of a beautifully written adventure,
-    with every page illustrated around them.
+    Your child's character is placed into every scene of a beautifully
+    written adventure. Consistent, recognizable, theirs.
 
 04  A Real Book, Delivered
     Printed hardcover, shipped to your door.
@@ -356,9 +359,9 @@ Q: How much does a book cost?
 A: $39 for a printed hardcover, illustrated and shipped.
 
 Q: How does the personalization work?
-A: You upload a photo of your child. We create a watercolor illustration
-   that captures their likeness — face, features, colouring. That character
-   stars in the story.
+A: You upload a photo of your child. We generate a full character sheet —
+   multiple poses, expressions, and outfits — so your child looks like
+   themselves on every page of the story.
 
 Q: Is my child's photo stored?
 A: Photos are only used to create the book character and are deleted
