@@ -1,122 +1,136 @@
-# Evertale Landing Page — Implementation Plan
+# Evertale Landing Page — Implementation Plan (v2)
 
 ## Context
-Build the Evertale pre-launch landing page from scratch based on the PRD. The goal is demand validation — collecting price-qualified waitlist signups. The page has 12 sections in a trust-then-convert flow. The stack is Next.js 16 (App Router), TailwindCSS v4, ShadCN. Only the `Button` component and base scaffolding exist.
+Build the Evertale pre-launch landing page. Goal: demand validation via price-qualified waitlist signups ($39). 12 sections in a trust-then-convert flow. Stack: Next.js 16 (App Router), TailwindCSS v4, ShadCN.
 
 ---
 
 ## A. Design System
 
+### Design Philosophy
+
+**Clean, modern, playful.** Think Apple simplicity meets children's bookshop warmth. Generous negative space lets the imagery and copy breathe. No visual clutter. The AI-generated illustrations carry the emotional weight — the UI stays out of the way.
+
+---
+
 ### Colors — `src/app/globals.css`
 
-All colors live as CSS custom properties in `:root` inside `globals.css`. To change the brand palette, update only these values — every component updates automatically.
-
-The starter palette is **warm storybook** (cream background, terracotta primary, deep brown text). Values use OKLch to match the existing format.
+**Clean white canvas, bold coral primary, near-black text.** No cream. No amber. Crisp and confident.
 
 ```css
-/* ─── BRAND PALETTE — update these to retheme the entire site ─── */
 :root {
   /* Page backgrounds */
-  --background:         oklch(0.98 0.012 80);   /* warm cream */
-  --card:               oklch(0.99 0.008 80);   /* slightly lighter card */
+  --background:         oklch(1 0 0);            /* pure white */
+  --card:               oklch(0.99 0.003 260);   /* barely-there cool tint */
 
   /* Text */
-  --foreground:         oklch(0.18 0.025 60);   /* deep warm brown */
-  --card-foreground:    oklch(0.18 0.025 60);
-  --muted-foreground:   oklch(0.52 0.02 60);    /* softer brown for captions */
+  --foreground:         oklch(0.13 0.02 260);    /* near-black, cool undertone */
+  --card-foreground:    oklch(0.13 0.02 260);
+  --muted-foreground:   oklch(0.45 0.015 260);   /* mid gray for captions */
 
   /* Primary — CTA buttons, links, accents */
-  --primary:            oklch(0.54 0.13 35);    /* terracotta */
-  --primary-foreground: oklch(0.98 0 0);        /* white */
+  --primary:            oklch(0.63 0.19 25);     /* warm coral — playful, bold */
+  --primary-foreground: oklch(1 0 0);            /* white */
 
-  /* Secondary — subtle backgrounds, outlines */
-  --secondary:          oklch(0.94 0.02 80);    /* warm off-white */
-  --secondary-foreground: oklch(0.18 0.025 60);
+  /* Secondary — ghost buttons, outlines */
+  --secondary:          oklch(0.97 0.003 260);   /* very light gray */
+  --secondary-foreground: oklch(0.13 0.02 260);
 
-  /* Muted — section backgrounds, dividers */
-  --muted:              oklch(0.95 0.015 80);   /* very light warm gray */
+  /* Muted — alternating section backgrounds */
+  --muted:              oklch(0.97 0.003 260);   /* light cool gray */
 
-  /* Accent — badges, highlights */
-  --accent:             oklch(0.88 0.07 80);    /* warm amber */
-  --accent-foreground:  oklch(0.18 0.025 60);
+  /* Accent — badges, highlights, soft backgrounds */
+  --accent:             oklch(0.95 0.04 260);    /* soft lavender tint */
+  --accent-foreground:  oklch(0.13 0.02 260);
 
   /* Structural */
-  --border:             oklch(0.88 0.02 80);
-  --input:              oklch(0.88 0.02 80);
-  --ring:               oklch(0.54 0.13 35);    /* matches primary */
+  --border:             oklch(0.91 0.005 260);
+  --input:              oklch(0.91 0.005 260);
+  --ring:               oklch(0.63 0.19 25);     /* matches primary */
   --radius:             0.625rem;
 }
 ```
 
-**To retheme:** Change the 3 key values — `--background`, `--primary`, `--foreground`. Everything else derives from them.
-
-**Section background alternation** (keeps page scannable without new variables):
-- Odd sections: `bg-background` (warm cream)
-- Even sections: `bg-muted` (slightly warmer off-white)
-- Quality Proof section: `bg-foreground` (near-black, full contrast)
-- Gift Positioning section: `bg-accent` (warm amber tint)
+**Section background rhythm:**
+- Most sections: `bg-background` (white) — let negative space do the work
+- Alternating accent sections: `bg-muted` (barely-there gray) — just enough contrast to signal a new block
+- Quality Proof: `bg-foreground text-background` (dark, full inversion — images pop)
+- Gift Positioning: `bg-accent` (soft lavender tint — feels special without shouting)
 
 ---
 
 ### Typography — `src/app/layout.tsx`
 
-Two Google Fonts, easy to swap by changing the import:
+A serif heading font gives warmth and editorial weight. Sans body stays clean and modern.
 
 ```ts
-// Headings — serif, editorial feel
-import { Playfair_Display, Inter } from "next/font/google"
+import { DM_Serif_Display, Inter } from "next/font/google"
 
-const playfair = Playfair_Display({
+const dmSerif = DM_Serif_Display({
+  weight: "400",
   subsets: ["latin"],
-  variable: "--font-heading",    // use as: font-[family-name:--font-heading]
+  variable: "--font-heading",
 })
 
 const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-sans",       // replaces Geist Sans
+  variable: "--font-sans",
 })
 ```
 
-Add to `@theme inline` in `globals.css`:
-```css
---font-heading: var(--font-heading);
-```
-
-Usage in components:
-- All `h1`, `h2`, `h3` → `font-[family-name:--font-heading]`
-- All body text → `font-sans` (Inter, already the default)
+Usage:
+- `h1`, `h2`, `h3` → `font-[family-name:--font-heading]` — serif, editorial
+- Body, buttons, UI → `font-sans` (Inter) — clean, legible
 
 ---
 
-### Layout Principles
+### Layout & Spacing Principles
 
-- **Max content width:** `max-w-6xl mx-auto px-6` (consistent across all sections)
-- **Section padding:** `py-20 md:py-28`
-- **Section alternation:** cream / off-white / cream (see above)
-- **Border radius:** use `rounded-xl` for image containers, `rounded-lg` for cards
-- **No decorative illustrations or icons added** — the AI-generated images carry all visual weight
+Generous negative space is the single biggest quality signal. When in doubt, add more space.
+
+- **Max content width:** `max-w-5xl mx-auto px-6` (tighter than 6xl — feels more curated)
+- **Section padding:** `py-24 md:py-32 lg:py-40` (very generous — each section breathes)
+- **Between elements:** `gap-6` minimum inside sections, `gap-8` to `gap-12` between content blocks
+- **Images:** `rounded-2xl` containers, subtle `shadow-sm` or `shadow-md`
+- **Cards:** `rounded-xl`, no heavy borders — use subtle shadow or bg tint
+
+### CTA Buttons
+
+All CTAs are **large and confident**. No small buttons for primary actions.
+
+- Primary CTA: `<Button size="lg" className="h-14 px-8 text-base rounded-full">` — tall, pill-shaped, impossible to miss
+- Secondary CTA: Same size, `variant="outline"` with `rounded-full`
+- Navbar CTA: `<Button size="default" className="rounded-full">` — slightly smaller but still prominent
 
 ---
 
 ## B. Section Copy & UI Layout
 
+**Content rule:** The page is about **Evertale** — a platform for personalized storybooks. Momotaro is only mentioned once, in the Story Preview section (Section 10), as "our first story." Every other section talks about "your child's storybook" generically. This keeps the brand scalable and the message clear.
+
 ---
 
 ### Section 1 — Navbar
 
-**Layout:** `sticky top-0 z-50`, `bg-background/95 backdrop-blur`. Two rows on mobile collapse to single row on desktop.
+**Layout:** `sticky top-0 z-50`, `bg-background/90 backdrop-blur-md`, border-b when scrolled.
+
 ```
-[Evertale]          How It Works · Stories · FAQ        [Join Early Access — $39 at Launch →]
+[Evertale]          How It Works · Stories · FAQ        [Get Started — $39]
 ```
-- "Evertale" — wordmark in `font-[family-name:--font-heading]`, `text-xl font-bold`
-- Nav links — hidden on mobile (`hidden md:flex`), visible on `md+`
-- CTA button — `<Button size="sm">` always visible
+
+- "Evertale" — `font-[family-name:--font-heading] text-xl`
+- Nav links — `hidden md:flex`, `text-sm text-muted-foreground`
+- CTA: `rounded-full` button, always visible, "Get Started — $39"
 
 ---
 
 ### Section 2 — Hero
 
-**Layout:** Two columns on `md+`, stacked on mobile. Visual right, copy left.
+**Layout:** Full-width. Large hero image dominates. Copy sits above or overlaid on the image with enough contrast.
+
+**Structure (mobile-first, stacked):**
+1. Copy block (centred on mobile, left-aligned on desktop)
+2. Full-width hero image below copy
 
 **Copy:**
 ```
@@ -124,90 +138,97 @@ H1: Your Child,
     the Hero of Every Story
 
 Subheadline:
-We generate a watercolor storybook character from your child's photo.
-Beautifully illustrated. Printed in hardcover. Kept forever.
+A personalized storybook where your child is the main character —
+illustrated from their photo, printed in hardcover, and kept forever.
 
-[See Your Child in a Story]   [Join Early Access — $39 at Launch]
+[Get Started — $39]          [See How It Works]
 ```
 
-**Visual (right column):**
-- Split panel: child photo (left half) | illustrated character in scene (right half)
-- Thin dividing line or `→` glyph between the two halves
-- Caption below: `"Real photo → storybook character"` in `text-sm text-muted-foreground`
-- Rounded container `rounded-2xl overflow-hidden`
+**Hero image:**
+- Large, warm photograph: a parent reading a beautifully illustrated storybook to their child. The book is visible, the child is engaged, the moment is intimate.
+- Full-width on mobile, right-column or full-bleed on desktop
+- `rounded-2xl` container, subtle shadow
+- This image is emotional, not explanatory — it sells the *experience* of the product, not the mechanics.
 
 ---
 
 ### Section 3 — Before/After
 
-**Layout:** Section title centred, then a responsive grid of 3–4 examples.
+**Layout:** Centred title, then a grid of 3 examples. White background.
 
 **Copy:**
 ```
-Eyebrow: "The Personalization"
-H2: This Is What It Actually Looks Like
+Eyebrow: "See the Difference"
+H2: From Photo to Storybook Character
 
 Subtext:
-Each character is generated from the child's real photo — not a preset avatar.
-These are examples from our beta.
+Upload a photo. We create a watercolor character that actually looks like your child.
+Not a cartoon. Not a preset. Them.
 ```
 
-**Each example card:**
-- `grid grid-cols-2 gap-0 rounded-xl overflow-hidden` — left: photo, right: character
-- Below card: `"Emma, age 5"` in `text-sm text-muted-foreground text-center`
+**Each card:**
+- Side-by-side: photo left, illustrated character right
+- `rounded-xl overflow-hidden`
+- Caption: `"Liam, age 4"` — `text-sm text-muted-foreground`
+- Grid: `grid-cols-1 md:grid-cols-3 gap-8`
 
 ---
 
 ### Section 4 — Quality Proof
 
-**Layout:** Dark background (`bg-foreground`), full-bleed. Images dominate. Minimal text.
+**Layout:** Dark background (`bg-foreground text-background`), full-bleed. Maximum image, minimum text.
 
 **Copy:**
 ```
-Single line (white text, centred):
+Centred, white text:
 "Every page, illustrated for your child."
 
 Below images, small caption:
-"From our first story — Momotaro: The Peach Boy"
+"Pages from a real Evertale storybook"
 ```
 
-**Images:** 3 story spreads in a staggered grid (2-column on desktop, 1-column on mobile).
+**Images:** 3 story spreads in a relaxed grid. `rounded-xl` with subtle white/10 border. Generous padding around them.
 
 ---
 
 ### Section 5 — How It Works
 
-**Layout:** Horizontal stepper on `md+`, vertical list on mobile. Light background (`bg-muted`).
+**Layout:** Centred heading, then 4 steps in a horizontal row on `md+`, vertical stack on mobile. `bg-muted`.
 
 **Copy:**
 ```
 H2: How It Works
 
-01  Upload a photo
-    Share a clear, recent photo of your child's face.
+01  Upload a Photo
+    A clear, recent photo of your child's face. That's all we need.
 
-02  We create your character
-    Our AI generates a watercolor illustration that looks like them — not a preset.
+02  We Illustrate Your Child
+    Our AI creates a watercolor character that captures their likeness —
+    features, expression, everything that makes them them.
 
-03  Your child becomes the hero
-    They star in Momotaro — The Peach Boy, a beloved Japanese tale about
-    courage, friendship, and finding your place in the world.
+03  They Star in the Story
+    Your child becomes the hero of a beautifully written adventure,
+    with every page illustrated around them.
 
-04  Printed and shipped to your door
-    A beautiful hardcover book, sent to you. Books ship after launch —
-    early access members are first.
+04  A Real Book, Delivered
+    Printed hardcover, shipped to your door.
+    Early access members are the first to receive theirs.
 ```
+
+Each step: large number in `text-primary font-[family-name:--font-heading] text-4xl`, title bold, description in `text-muted-foreground`.
 
 ---
 
 ### Section 6 — Social Proof
 
-**Layout:** Centred. Large counter number + 2–3 quote cards in a grid.
+**Layout:** Centred. Large number + subtitle, then quote cards below. White background. Lots of vertical space.
 
 **Copy:**
 ```
-[1,240+]
-families on the early access list
+"1,240+"
+families on the waitlist
+
+---
 
 "I cried when I saw my daughter in the illustration.
 It actually looked like her."
@@ -220,143 +241,146 @@ It actually looked like her."
 — Clara, mum of a 5-year-old
 ```
 
+Number: `text-6xl md:text-7xl font-[family-name:--font-heading]`
+Quotes: in cards with `bg-muted rounded-xl p-8`, `grid-cols-1 md:grid-cols-3 gap-6`
+
 ---
 
 ### Section 7 — Gift Positioning
 
-**Layout:** Two columns on desktop — copy left, occasions right. Warm amber background (`bg-accent`).
+**Layout:** Two columns on desktop. `bg-accent` (soft lavender). Generous padding.
 
 **Copy:**
 ```
 H2: The Gift They'll Keep for 20 Years
 
 Body:
-Most gifts are forgotten by February.
-A storybook where your child is the hero is different — it gets read at bedtime
-for years, then kept on a shelf for decades.
+Most kids' gifts are forgotten by February.
+A storybook where your child is the hero is different —
+read at bedtime for years, kept on a shelf for decades.
 
-Right column heading: "Perfect for"
-Badges: Birthdays · Holidays · New Baby · Grandparents Gifting
+Right column:
+"Perfect for"
+Badges: Birthdays · Holidays · New Baby · Grandparents
 ```
+
+Badges: `<Badge variant="secondary">` with `rounded-full px-4 py-1.5 text-sm`
 
 ---
 
 ### Section 8 — Pricing & Early Access (Primary CTA)
 
-**Layout:** Centred, constrained width. Pricing block above form.
+**Layout:** Centred, constrained to `max-w-lg`. Clean, focused. White background. Tons of space above and below.
 
 **Copy:**
 ```
-H2: Reserve Your Copy
-Subhead: Founding Member Pricing
+H2: Get Your Child's Storybook
 
-Pricing block:
-~~$39~~  →  $29
-"Founding member price.
-Books are $39 at launch — early access members lock in $29."
+Price:
+$39
+"Hardcover, illustrated, shipped."
 
 Form:
-[your@email.com            ]
-[Child's age (optional) ▾  ]
-[    Join Early Access      ]
+[your@email.com                    ]
+[Child's age (optional)          ▾ ]
 
-Below button (muted):
-"No payment now. We'll email you when books are ready to order."
+[         Join the Waitlist         ]   ← full-width, large, rounded-full, primary
+
+Below button (muted, small):
+"No payment now. We'll email you when your book is ready to order."
 
 Success state:
-"You're on the list. We'll email you when Evertale is ready."
+"You're on the list — we'll be in touch soon."
 ```
+
+The price is just **$39**. No crossed-out numbers, no "founding member" complexity. Clean and confident.
 
 ---
 
 ### Section 9 — Privacy & Safety
 
-**Layout:** Two columns on desktop. Copy left, commitments list right.
+**Layout:** Two columns on desktop. `bg-muted`. Copy left, commitments right.
 
 **Copy:**
 ```
-H2: Your Child's Photo Is Yours. Always.
+H2: Your Child's Photo Is Safe With Us
 
-Left col body:
+Left:
 We know sharing a photo of your child takes trust.
-Here's exactly what we do — and don't do — with it.
+Here's exactly what we do — and what we never will.
 
-Right col (each with ✓ CheckCircle2 icon in green):
-✓  Photos are used only to generate your book character.
-✓  Photos are deleted from our servers within 30 days of book creation.
-✓  We never use your child's photo to train AI models.
+Right (each with CheckCircle2 icon in primary color):
+✓  Photos are used only to create your child's book character.
+✓  Photos are deleted within 30 days of book creation.
+✓  We never use photos to train AI models.
 ✓  We never share photos with third parties.
-✓  Your data is encrypted in transit and at rest.
+✓  All data is encrypted in transit and at rest.
 
-Link below list: "Read our full Privacy Policy →"
+"Read our Privacy Policy →"
 ```
 
 ---
 
 ### Section 10 — Story Preview
 
-**Layout:** Dark-tinted or muted background. Story info left, spread images right on desktop.
+**Layout:** `bg-muted`. Copy left, story spread images right on desktop.
+
+This is the **only section** that names a specific story. Everything else is about Evertale.
 
 **Copy:**
 ```
-Eyebrow: "Our First Adventure"
+Eyebrow: "Our First Story"
 H2: Momotaro — The Peach Boy
 
 Body:
-Every Evertale begins with a classic — stories told for generations,
-now with your child at the centre.
+A beloved Japanese folktale about an unlikely hero who finds
+courage, makes unexpected friends, and discovers where he belongs.
+Reimagined with your child at the centre. Perfect for ages 3–8.
 
-Momotaro is a beloved Japanese folktale about an unlikely hero who finds
-courage, makes unexpected friends, and discovers his place in the world.
-A perfect bedtime story for ages 3–8.
-
-Badges: Courage · Friendship · Helping Others · Ages 3–8
+Badges: Courage · Friendship · Kindness · Ages 3–8
 
 Below spreads:
-"More stories are coming. Join early access to help choose what we make next."
-[Join Early Access →]
+"More stories are on the way."
+[Join the Waitlist →]
 ```
 
 ---
 
 ### Section 11 — FAQ
 
-**Layout:** Constrained width (`max-w-2xl`), centred. ShadCN Accordion.
+**Layout:** `max-w-2xl mx-auto`, centred. ShadCN Accordion. White background.
 
 **Copy (6 items):**
 ```
-Q: How much will the book cost?
-A: Books will be $39 at launch. Founding members who join early access today
-   lock in a price of $29.
+Q: How much does a book cost?
+A: $39 for a printed hardcover, illustrated and shipped.
 
 Q: How does the personalization work?
-A: You upload a photo of your child. Our AI creates a watercolor illustration
+A: You upload a photo of your child. We create a watercolor illustration
    that captures their likeness — face, features, colouring. That character
-   becomes the hero of your chosen story.
+   stars in the story.
 
 Q: Is my child's photo stored?
-A: Photos are only used to generate your book character and are deleted from
-   our servers within 30 days of creation. We never use them to train AI models
-   or share them with anyone. See our Privacy section for full details.
+A: Photos are only used to create the book character and are deleted
+   within 30 days. We never use them for AI training or share them.
 
 Q: What age is the book for?
-A: Momotaro — The Peach Boy is written for ages 3–8 and reads beautifully aloud.
+A: Our first story is written for ages 3–8 and reads beautifully aloud.
 
-Q: When will the book be available?
-A: We're in the final stages of production. Early access members will be
-   the first to know — and the first to order.
+Q: When will books be ready?
+A: We're in the final stages. Waitlist members will be the first to know
+   and the first to order.
 
-Q: What if I don't like how my child's character looks?
-A: We'll make it right. If the character doesn't capture your child's likeness
-   to your satisfaction, we'll regenerate it before printing. Your happiness
-   with the result matters more than a quick turnaround.
+Q: What if the character doesn't look right?
+A: We'll regenerate it until you're happy. Your satisfaction matters more
+   than a quick turnaround.
 ```
 
 ---
 
 ### Section 12 — Footer
 
-**Layout:** Simple two-row. Separator above.
+**Layout:** `border-t`, simple. Generous top padding.
 
 ```
 Evertale          About · FAQ · Contact · Privacy Policy
@@ -366,11 +390,11 @@ Evertale          About · FAQ · Contact · Privacy Policy
 
 ---
 
-## C. Implementation Plan
+## C. Implementation Details
 
 ---
 
-## 1. Install Dependencies
+### 1. Install Dependencies
 
 ```bash
 npm install @supabase/supabase-js posthog-js
@@ -379,7 +403,7 @@ npx shadcn@latest add input accordion badge separator
 
 ---
 
-## 2. Create `.env.local`
+### 2. Create `.env.local`
 
 ```
 NEXT_PUBLIC_SUPABASE_URL=
@@ -392,7 +416,7 @@ NEXT_PUBLIC_POSTHOG_HOST=https://app.posthog.com
 
 ---
 
-## 3. Supabase Table
+### 3. Supabase Table
 
 ```sql
 create table waitlist (
@@ -410,114 +434,93 @@ alter table waitlist enable row level security;
 
 ---
 
-## 4. File Structure
+### 4. File Structure
 
-### Modify
-- `src/app/layout.tsx` — update metadata, wrap children in `<PostHogProvider>`
-- `src/app/page.tsx` — replace boilerplate with section orchestrator (~30 lines)
+**Modify:**
+- `src/app/layout.tsx` — fonts, metadata, PostHogProvider
+- `src/app/globals.css` — brand palette
+- `src/app/page.tsx` — section orchestrator
 
-### Create
+**Create:**
 ```
 src/
-├── app/api/waitlist/route.ts          POST handler
+├── app/api/waitlist/route.ts
 ├── lib/
-│   ├── supabase.ts                    server-only Supabase admin client
-│   └── posthog.ts                     PostHog init + provider ("use client")
+│   ├── supabase.ts
+│   └── posthog.ts
 ├── hooks/
-│   └── use-waitlist-form.ts           form state + submission + PostHog events
+│   └── use-waitlist-form.ts
 └── components/sections/
-    ├── navbar.tsx                     ("use client" for scroll shadow)
-    ├── hero.tsx                       ("use client" for CTA PostHog event)
-    ├── before-after.tsx               ("use client" for IntersectionObserver)
-    ├── quality-proof.tsx              (server)
-    ├── how-it-works.tsx               (server)
-    ├── social-proof.tsx               (server)
-    ├── gift-positioning.tsx           (server)
-    ├── pricing.tsx                    ("use client" — form + PostHog)
-    ├── privacy.tsx                    (server + thin client wrapper for event)
-    ├── story-preview.tsx              (server)
-    ├── faq.tsx                        (server — uses ShadCN Accordion)
-    └── footer.tsx                     (server)
+    ├── navbar.tsx
+    ├── hero.tsx
+    ├── before-after.tsx
+    ├── quality-proof.tsx
+    ├── how-it-works.tsx
+    ├── social-proof.tsx
+    ├── gift-positioning.tsx
+    ├── pricing.tsx
+    ├── privacy.tsx
+    ├── story-preview.tsx
+    ├── faq.tsx
+    └── footer.tsx
 ```
 
 ---
 
-## 5. Key Implementations
+### 5. Key Implementations
 
-### `src/lib/supabase.ts`
-Server-only client using `SUPABASE_SERVICE_ROLE_KEY` (never sent to browser).
+**`src/lib/supabase.ts`** — Server-only client via `SUPABASE_SERVICE_ROLE_KEY`.
 
-### `src/lib/posthog.ts`
-Client component. Init PostHog once on `window` mount. Export `posthog` instance and `PostHogProvider` wrapper.
+**`src/lib/posthog.ts`** — `"use client"`. Init on window mount. Export `PostHogProvider`.
 
-### `src/app/api/waitlist/route.ts`
-- Validate email (required) and child_age (optional, 1–12)
-- Upsert to Supabase with `ignoreDuplicates: true` (idempotent — no error on re-submit)
-- Send confirmation email via Resend using `fetch` directly (no SDK needed)
-- Resend failure is **non-fatal** — signup persists, error logged only
+**`src/app/api/waitlist/route.ts`**
+- Validate email (required), child_age (optional, 1–12)
+- Upsert to Supabase (`ignoreDuplicates: true`)
+- Send confirmation via Resend `fetch` (non-fatal on failure)
 
-### `src/hooks/use-waitlist-form.ts`
-- Manages `email`, `childAge`, `status` (`idle/loading/success/error`) state
-- Reads UTM params from `window.location.search` on mount
-- Posts to `/api/waitlist`, fires PostHog events on success
+**`src/hooks/use-waitlist-form.ts`**
+- State: `email`, `childAge`, `status` (idle/loading/success/error)
+- Reads UTM params on mount
+- Posts to `/api/waitlist`, fires PostHog events
 
-### Placeholder images
-Use `https://placehold.co/{w}x{h}` URLs. User has real AI-generated images to swap in during build. Each `<Image>` tagged with `{/* TODO: replace with real image */}` and a descriptive `alt` text so the correct image is obvious. All images use fixed `width`/`height` props to avoid CLS when swapped.
+**Placeholder images** — `https://placehold.co/{w}x{h}` with `{/* TODO: replace */}` comments and descriptive `alt` text. Fixed `width`/`height` to prevent CLS.
 
 ---
 
-## 6. Section Specs (12 sections)
-
-| # | Component | Key content |
-|---|---|---|
-| 1 | `navbar` | Sticky, wordmark, 3 anchor links, CTA "Join Early Access — $39 at Launch" |
-| 2 | `hero` | H1 "Your Child, the Hero of Every Story", split photo→character visual, 2 CTAs |
-| 3 | `before-after` | "This Is What the Personalization Actually Looks Like", 3–4 side-by-side examples |
-| 4 | `quality-proof` | Full-bleed Momotaro spreads, single copy line "Every page, illustrated for your child." |
-| 5 | `how-it-works` | 4 numbered steps, step 4 includes shipping timeline expectation |
-| 6 | `social-proof` | Waitlist counter "1,240+ families", 2–3 beta quotes |
-| 7 | `gift-positioning` | "The Gift They'll Keep for 20 Years", occasion Badges |
-| 8 | `pricing` | $39 crossed out → $29 founding, email + optional child age form, "No payment now" |
-| 9 | `privacy` | 5 specific commitments with CheckCircle2 icons |
-| 10 | `story-preview` | Momotaro intro, themes as Badges, 2 spread previews |
-| 11 | `faq` | 6 questions in ShadCN Accordion |
-| 12 | `footer` | Links + copyright |
-
----
-
-## 7. PostHog Events
+### 6. PostHog Events
 
 | Event | Trigger |
 |---|---|
-| `navbar_cta_click` | Navbar CTA click |
-| `hero_cta_click` | Hero primary CTA click |
-| `demo_interaction` | Before/after section enters viewport |
-| `pricing_section_view` | Pricing section enters viewport |
-| `privacy_section_view` | Privacy section enters viewport |
+| `navbar_cta_click` | Navbar CTA |
+| `hero_cta_click` | Hero primary CTA |
+| `demo_interaction` | Before/after enters viewport |
+| `pricing_section_view` | Pricing enters viewport |
+| `privacy_section_view` | Privacy enters viewport |
 | `waitlist_signup` | Successful form submit |
-| `signup_with_age` | Successful submit with child_age provided |
+| `signup_with_age` | Submit with child_age |
 
 ---
 
-## 8. Implementation Order
+### 7. Implementation Order
 
 1. Install deps + ShadCN components
-2. `.env.local` + Supabase table
-3. `lib/supabase.ts`, `lib/posthog.ts`, update `layout.tsx`
-4. `api/waitlist/route.ts` (test with curl)
-5. `hooks/use-waitlist-form.ts`
-6. `page.tsx` orchestrator (stubs)
-7. Sections in order: Navbar → Hero → Pricing (end-to-end flow) → remaining
-8. PostHog events added per section as built
-9. Mobile responsiveness + accessibility pass
+2. `.env.local`
+3. `globals.css` palette + `layout.tsx` fonts
+4. `lib/supabase.ts`, `lib/posthog.ts`
+5. `api/waitlist/route.ts`
+6. `hooks/use-waitlist-form.ts`
+7. `page.tsx` orchestrator
+8. Sections: Navbar → Hero → Pricing (end-to-end flow) → remaining in order
+9. PostHog events wired per section
+10. Responsive + accessibility pass
 
 ---
 
-## 9. Verification
+### 8. Verification
 
-1. `npm run dev` — page loads without errors
-2. Submit form with a real email → row appears in Supabase `waitlist` table with UTM fields populated
-3. Confirmation email received via Resend
-4. PostHog dashboard shows `waitlist_signup` event with correct properties
-5. `npm run build` passes with no TypeScript or lint errors
-6. Mobile: test at 375px — navbar collapses correctly, form is usable, images don't overflow
+1. `npm run dev` — loads without errors
+2. Form submit → row in Supabase `waitlist` table
+3. Confirmation email via Resend
+4. PostHog events fire correctly
+5. `npm run build` — no TS/lint errors
+6. Mobile 375px — navbar collapses, form usable, images contained
