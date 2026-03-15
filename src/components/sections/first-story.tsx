@@ -1,4 +1,13 @@
-import { BookOpen } from "lucide-react";
+import { StoryFlipbook } from "@/components/story/story-flipbook";
+
+const MOMOTARO_PAGES: string[] = [
+  "/momotaro/example-panels/page-01.svg",
+  "/momotaro/example-panels/page-02.svg",
+  "/momotaro/example-panels/page-03.svg",
+  "/momotaro/example-panels/page-04.svg",
+  "/momotaro/example-panels/page-05.svg",
+  "/momotaro/example-panels/page-06.svg",
+];
 
 export function FirstStory() {
   return (
@@ -28,23 +37,7 @@ export function FirstStory() {
             </p>
           </div>
 
-          <div className="relative mx-auto w-full max-w-md lg:mx-0">
-            <div className="relative aspect-[3/4] overflow-hidden rounded-2xl border border-border bg-gradient-to-b from-muted via-background to-muted/50 shadow-lg">
-              <div className="flex h-full flex-col items-center justify-center gap-4 p-8 text-center">
-                <BookOpen className="size-12 text-pop/30" />
-                <div className="w-full space-y-3">
-                  <div className="mx-auto h-3 w-3/4 rounded-full bg-muted" />
-                  <div className="mx-auto h-2 w-1/2 rounded-full bg-muted" />
-                  <div className="mt-6 aspect-[16/10] rounded-lg bg-muted/70" />
-                  <div className="mx-auto h-2 w-5/6 rounded-full bg-muted" />
-                  <div className="mx-auto h-2 w-4/6 rounded-full bg-muted" />
-                </div>
-                <p className="mt-2 text-xs text-muted-foreground">
-                  Story preview spread
-                </p>
-              </div>
-            </div>
-          </div>
+          <StoryFlipbook images={MOMOTARO_PAGES} />
         </div>
       </div>
     </section>
