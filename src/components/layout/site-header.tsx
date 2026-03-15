@@ -94,14 +94,14 @@ export function SiteHeader() {
       </div>
 
       {mobileOpen && (
-        <div className="border-t border-border/60 bg-background px-6 pb-6 pt-4 md:hidden">
-          <nav className="flex flex-col gap-4">
+        <div className="fixed inset-0 top-16 z-40 flex flex-col bg-background md:hidden">
+          <nav className="flex flex-1 flex-col items-center justify-center gap-8">
             {navLinks.map((link) =>
               link.href.startsWith("#") ? (
                 <a
                   key={link.href}
                   href={link.href}
-                  className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                  className="text-lg text-muted-foreground transition-colors hover:text-foreground"
                   onClick={() => setMobileOpen(false)}
                 >
                   {link.label}
@@ -110,7 +110,7 @@ export function SiteHeader() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`text-sm transition-colors hover:text-foreground ${
+                  className={`text-lg transition-colors hover:text-foreground ${
                     pathname === link.href
                       ? "font-medium text-foreground"
                       : "text-muted-foreground"
@@ -122,9 +122,12 @@ export function SiteHeader() {
               ),
             )}
           </nav>
-          <div className="mt-4 flex flex-col gap-3">
+          <div className="border-t border-border/60 px-6 py-6 flex flex-col gap-3">
             {isSignedIn ? (
-              <UserButton />
+              <div className="flex w-full items-center gap-3 rounded-lg border border-border px-4 py-3">
+                <UserButton />
+                <span className="text-sm font-medium">Account</span>
+              </div>
             ) : (
               <SignInButton mode="modal">
                 <Button variant="outline" size="lg" className="w-full">
@@ -134,7 +137,9 @@ export function SiteHeader() {
             )}
             {isLanding && (
               <Button asChild size="lg" className="w-full">
-                <Link href="/create">Create Your Character</Link>
+                <Link href="/create" onClick={() => setMobileOpen(false)}>
+                  Create Your Character
+                </Link>
               </Button>
             )}
           </div>

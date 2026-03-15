@@ -3,8 +3,8 @@ import Link from "next/link";
 export function SiteFooter() {
   return (
     <footer className="border-t border-border/60 bg-warm/50">
-      <div className="mx-auto max-w-6xl px-6 py-12">
-        <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
+      <div className="mx-auto max-w-6xl px-6 py-4">
+        <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
           <div>
             <Link
               href="/"
@@ -30,7 +30,7 @@ export function SiteFooter() {
           </nav>
         </div>
 
-        <div className="mt-8 border-t border-border/60 pt-6 text-center text-xs text-muted-foreground">
+        <div className="mt-4 border-t border-border/60 pt-4 text-center text-xs text-muted-foreground">
           {new Date().getFullYear()} Evertale. All rights reserved.
         </div>
       </div>
