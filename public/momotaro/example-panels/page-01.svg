@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 640" width="800" height="640">
+  <defs>
+    <radialGradient id="sky" cx="50%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#fde8c8"/>
+      <stop offset="100%" stop-color="#f4c27a"/>
+    </radialGradient>
+    <filter id="blur1">
+      <feGaussianBlur stdDeviation="3"/>
+    </filter>
+    <filter id="blur2">
+      <feGaussianBlur stdDeviation="6"/>
+    </filter>
+  </defs>
+
+  <!-- Sky background -->
+  <rect width="800" height="640" fill="url(#sky)"/>
+
+  <!-- Soft clouds -->
+  <ellipse cx="150" cy="100" rx="90" ry="35" fill="white" opacity="0.5" filter="url(#blur1)"/>
+  <ellipse cx="200" cy="90" rx="70" ry="28" fill="white" opacity="0.4" filter="url(#blur1)"/>
+  <ellipse cx="600" cy="120" rx="110" ry="40" fill="white" opacity="0.45" filter="url(#blur1)"/>
+  <ellipse cx="650" cy="108" rx="80" ry="30" fill="white" opacity="0.35" filter="url(#blur1)"/>
+
+  <!-- Distant mountains -->
+  <ellipse cx="400" cy="420" rx="500" ry="180" fill="#c8d8b0" opacity="0.6" filter="url(#blur2)"/>
+  <ellipse cx="200" cy="450" rx="300" ry="150" fill="#b0c898" opacity="0.5" filter="url(#blur2)"/>
+  <ellipse cx="650" cy="440" rx="280" ry="140" fill="#a8c090" opacity="0.5" filter="url(#blur2)"/>
+
+  <!-- Ground -->
+  <ellipse cx="400" cy="580" rx="500" ry="120" fill="#8faa70" opacity="0.7"/>
+  <rect x="0" y="560" width="800" height="80" fill="#7a9660" opacity="0.6"/>
+
+  <!-- Large peach tree -->
+  <rect x="370" y="320" width="22" height="220" fill="#8b5e3c" rx="5"/>
+  <ellipse cx="381" cy="280" rx="85" ry="95" fill="#f4a0b0" opacity="0.75"/>
+  <ellipse cx="340" cy="300" rx="60" ry="70" fill="#f48090" opacity="0.6"/>
+  <ellipse cx="420" cy="295" rx="55" ry="65" fill="#f490a0" opacity="0.6"/>
+
+  <!-- Peaches -->
+  <circle cx="360" cy="260" r="18" fill="#f07090"/>
+  <circle cx="400" cy="245" r="20" fill="#f07090"/>
+  <circle cx="345" cy="290" r="16" fill="#e86080"/>
+
+  <!-- Sun -->
+  <circle cx="680" cy="80" r="45" fill="#ffd060" opacity="0.8" filter="url(#blur1)"/>
+  <circle cx="680" cy="80" r="35" fill="#ffe090" opacity="0.9"/>
+
+  <!-- Japanese house in background -->
+  <rect x="80" y="420" width="120" height="80" fill="#e8d8c0" opacity="0.8"/>
+  <polygon points="60,420 200,420 130,360" fill="#8b4030" opacity="0.8"/>
+  <rect x="115" y="450" width="30" height="50" fill="#6b4020" opacity="0.7"/>
+
+  <!-- Title area at bottom -->
+  <rect x="0" y="580" width="800" height="60" fill="#4a3020" opacity="0.35"/>
+  <text x="400" y="615" font-family="Georgia, serif" font-size="22" fill="#fff8e8" text-anchor="middle" opacity="0.9">Momotaro — The Peach Boy</text>
+</svg>

@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 640" width="800" height="640">
+  <defs>
+    <radialGradient id="sunset" cx="50%" cy="60%" r="80%">
+      <stop offset="0%" stop-color="#f8e090"/>
+      <stop offset="50%" stop-color="#f4a850"/>
+      <stop offset="100%" stop-color="#e06828"/>
+    </radialGradient>
+    <filter id="soft">
+      <feGaussianBlur stdDeviation="4"/>
+    </filter>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="6"/>
+    </filter>
+  </defs>
+
+  <!-- Warm sunset sky -->
+  <rect width="800" height="640" fill="url(#sunset)"/>
+
+  <!-- Sun on horizon -->
+  <circle cx="400" cy="420" r="80" fill="#f8f060" opacity="0.6" filter="url(#glow)"/>
+  <circle cx="400" cy="420" r="55" fill="#f8e040" opacity="0.7"/>
+
+  <!-- Silhouette hills -->
+  <ellipse cx="150" cy="520" rx="220" ry="120" fill="#3a2810" opacity="0.6"/>
+  <ellipse cx="650" cy="530" rx="220" ry="110" fill="#3a2810" opacity="0.55"/>
+  <ellipse cx="400" cy="560" rx="350" ry="100" fill="#2a1a08" opacity="0.5"/>
+
+  <!-- Ground -->
+  <rect x="0" y="560" width="800" height="80" fill="#2a1808" opacity="0.7"/>
+
+  <!-- Silhouette of peach tree (return home) -->
+  <rect x="90" y="320" width="16" height="240" fill="#1a0e04" opacity="0.7"/>
+  <ellipse cx="98" cy="290" rx="70" ry="75" fill="#1a0e04" opacity="0.6"/>
+  <ellipse cx="70" cy="310" rx="50" ry="55" fill="#1a0e04" opacity="0.5"/>
+
+  <!-- Silhouette farmhouse -->
+  <rect x="580" y="410" width="130" height="130" fill="#1a0e04" opacity="0.65"/>
+  <polygon points="565,410 725,410 648,350" fill="#150b03" opacity="0.7"/>
+  <rect x="625" y="450" width="30" height="90" fill="#0a0602" opacity="0.8"/>
+  <!-- Warm light in window -->
+  <rect x="590" y="435" width="28" height="22" fill="#f8d060" opacity="0.7"/>
+  <rect x="635" y="435" width="28" height="22" fill="#f8c840" opacity="0.65"/>
+
+  <!-- Celebration group - silhouettes -->
+  <!-- Grandmother -->
+  <circle cx="280" cy="465" r="24" fill="#1a0e04" opacity="0.8"/>
+  <ellipse cx="280" cy="510" rx="26" ry="38" fill="#1a0e04" opacity="0.75"/>
+
+  <!-- Grandfather with staff -->
+  <circle cx="340" cy="460" r="26" fill="#1a0e04" opacity="0.8"/>
+  <ellipse cx="340" cy="508" rx="28" ry="40" fill="#1a0e04" opacity="0.75"/>
+  <line x1="365" y1="490" x2="385" y2="560" stroke="#1a0e04" stroke-width="6" stroke-linecap="round" opacity="0.8"/>
+
+  <!-- Child hero - arms up celebrating -->
+  <circle cx="420" cy="445" r="27" fill="#1a0e04" opacity="0.85"/>
+  <ellipse cx="420" cy="492" rx="25" ry="38" fill="#1a0e04" opacity="0.8"/>
+  <!-- Arms raised -->
+  <path d="M 400 460 Q 370 430 355 405" stroke="#1a0e04" stroke-width="14" fill="none" stroke-linecap="round" opacity="0.8"/>
+  <path d="M 440 460 Q 470 430 485 405" stroke="#1a0e04" stroke-width="14" fill="none" stroke-linecap="round" opacity="0.8"/>
+
+  <!-- Dog -->
+  <ellipse cx="490" cy="505" rx="30" ry="22" fill="#1a0e04" opacity="0.75"/>
+  <circle cx="516" cy="490" r="20" fill="#1a0e04" opacity="0.75"/>
+  <!-- Tail wagging -->
+  <path d="M 462 498 Q 445 475 450 455" stroke="#1a0e04" stroke-width="8" fill="none" stroke-linecap="round" opacity="0.7"/>
+
+  <!-- Flying birds / fireflies -->
+  <path d="M 200 200 Q 212 190 224 200" stroke="#f8d060" stroke-width="2.5" fill="none" opacity="0.7"/>
+  <path d="M 350 160 Q 362 150 374 160" stroke="#f8d060" stroke-width="2.5" fill="none" opacity="0.65"/>
+  <path d="M 500 180 Q 512 170 524 180" stroke="#f8d060" stroke-width="2.5" fill="none" opacity="0.7"/>
+  <path d="M 620 220 Q 632 210 644 220" stroke="#f8d060" stroke-width="2.5" fill="none" opacity="0.6"/>
+  <!-- Fireflies as dots -->
+  <circle cx="240" cy="350" r="3" fill="#f8f060" opacity="0.7"/>
+  <circle cx="310" cy="320" r="3" fill="#f8f060" opacity="0.6"/>
+  <circle cx="480" cy="340" r="3" fill="#f8f060" opacity="0.65"/>
+  <circle cx="560" cy="300" r="3" fill="#f8f060" opacity="0.7"/>
+  <circle cx="180" cy="400" r="2.5" fill="#f8f060" opacity="0.55"/>
+  <circle cx="620" cy="380" r="2.5" fill="#f8f060" opacity="0.6"/>
+
+  <!-- Golden light rays from sun -->
+  <line x1="400" y1="420" x2="150" y2="100" stroke="#f8e080" stroke-width="1.5" opacity="0.15"/>
+  <line x1="400" y1="420" x2="650" y2="100" stroke="#f8e080" stroke-width="1.5" opacity="0.15"/>
+  <line x1="400" y1="420" x2="50" y2="300" stroke="#f8e080" stroke-width="1.5" opacity="0.12"/>
+  <line x1="400" y1="420" x2="750" y2="300" stroke="#f8e080" stroke-width="1.5" opacity="0.12"/>
+
+  <!-- "The End" text area -->
+  <text x="400" y="100" font-family="Georgia, serif" font-size="42" fill="#f8f0d0" text-anchor="middle" opacity="0.85" font-style="italic">The End</text>
+  <text x="400" y="145" font-family="Georgia, serif" font-size="18" fill="#f8e8b0" text-anchor="middle" opacity="0.65">And they all lived happily ever after</text>
+</svg>

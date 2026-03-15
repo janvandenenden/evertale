@@ -1,8 +1,12 @@
 import { StoryFlipbook } from "@/components/story/story-flipbook";
 
 const MOMOTARO_PAGES: string[] = [
-  // Add paths once images are placed in public/stories/momotaro/
-  // Example: "/stories/momotaro/page-01.jpg"
+  "/momotaro/example-panels/page-01.svg",
+  "/momotaro/example-panels/page-02.svg",
+  "/momotaro/example-panels/page-03.svg",
+  "/momotaro/example-panels/page-04.svg",
+  "/momotaro/example-panels/page-05.svg",
+  "/momotaro/example-panels/page-06.svg",
 ];
 
 export function FirstStory() {
