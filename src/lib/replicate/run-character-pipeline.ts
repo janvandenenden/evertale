@@ -1,9 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { generateImage, CHARACTER_SHEET_OUTLINE_URL } from "@/lib/replicate/generate-character";
 import { generateSceneImage } from "@/lib/replicate/generate-scene";
-import { buildScenePrompt } from "@/lib/prompts/scene";
 import { getStoryConfig } from "@/lib/stories";
 import { uploadToR2, buildStoryStorageKey } from "@/lib/storage/r2";
+import { withRetry } from "@/lib/retry";
 
 async function downloadImage(url: string): Promise<Buffer> {
   const response = await fetch(url);
@@ -64,11 +64,13 @@ export async function runCharacterPipeline(
 
       for (const { phase, promptBuilder } of config.sheetPhases) {
         const prompt = promptBuilder();
-        const tempUrl = await generateImage(prompt, photoUrl, {
-          outlineUrl: CHARACTER_SHEET_OUTLINE_URL,
-        });
+        const tempUrl = await withRetry(() =>
+          generateImage(prompt, photoUrl, {
+            outlineUrl: CHARACTER_SHEET_OUTLINE_URL,
+          })
+        );
 
-        const buffer = await downloadImage(tempUrl);
+        const buffer = await withRetry(() => downloadImage(tempUrl));
         const key = buildStoryStorageKey(
           storySlug,
           "characters",
@@ -78,12 +80,17 @@ export async function runCharacterPipeline(
         );
         const imageUrl = await uploadToR2(key, buffer, "image/png");
 
-        const { error: sheetError } = await supabase.from("character_sheets").insert({
-          character_version_id: characterVersionId,
-          story_id: charVersion.story_id,
-          phase,
-          image_url: imageUrl,
-        });
+        const { error: sheetError } = await supabase
+          .from("character_sheets")
+          .upsert(
+            {
+              character_version_id: characterVersionId,
+              story_id: charVersion.story_id,
+              phase,
+              image_url: imageUrl,
+            },
+            { onConflict: "character_version_id,phase" }
+          );
 
         if (sheetError) {
           throw new Error(`Failed to save character sheet: ${sheetError.message}`);
@@ -103,13 +110,15 @@ export async function runCharacterPipeline(
       }
 
       const coverPrompt = config.coverPromptBuilder(childName);
-      const coverTempUrl = await generateSceneImage(
-        coverPrompt,
-        coverSheetUrl,
-        config.coverTemplateUrl
+      const coverTempUrl = await withRetry(() =>
+        generateSceneImage(
+          coverPrompt,
+          coverSheetUrl,
+          config.coverTemplateUrl
+        )
       );
 
-      const coverBuffer = await downloadImage(coverTempUrl);
+      const coverBuffer = await withRetry(() => downloadImage(coverTempUrl));
       const coverKey = buildStoryStorageKey(
         storySlug,
         "previews",
@@ -121,43 +130,17 @@ export async function runCharacterPipeline(
 
       const { error: coverError } = await supabase
         .from("character_version_scenes")
-        .insert({
-          character_version_id: characterVersionId,
-          scene_id: "cover",
-          image_url: coverUrl,
-        });
+        .upsert(
+          {
+            character_version_id: characterVersionId,
+            scene_id: "cover",
+            image_url: coverUrl,
+          },
+          { onConflict: "character_version_id,scene_id" }
+        );
 
       if (coverError) {
         throw new Error(`Failed to save cover: ${coverError.message}`);
-      }
-
-      for (const scene of config.scenes) {
-        if (!scene.templateUrl) continue;
-
-        const sceneSheetUrl = sheetPhaseToUrl[scene.phase];
-        if (!sceneSheetUrl) continue;
-
-        const scenePrompt = buildScenePrompt(scene.id, childName, scene.phase as "baby" | "child");
-        const sceneTempUrl = await generateSceneImage(
-          scenePrompt,
-          sceneSheetUrl,
-          scene.templateUrl
-        );
-
-        const sceneBuffer = await downloadImage(sceneTempUrl);
-        const sceneKey = buildStoryStorageKey(
-          storySlug,
-          "assets",
-          userId,
-          `${characterVersionId}-${scene.id}.png`
-        );
-        const sceneImageUrl = await uploadToR2(sceneKey, sceneBuffer, "image/png");
-
-        await supabase.from("character_version_scenes").insert({
-          character_version_id: characterVersionId,
-          scene_id: scene.id,
-          image_url: sceneImageUrl,
-        });
       }
 
       await supabase

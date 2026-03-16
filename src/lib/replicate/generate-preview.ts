@@ -13,6 +13,26 @@ interface PredictionResult {
   error: string | null;
 }
 
+async function pollPrediction(predictionId: string): Promise<PredictionResult> {
+  const replicate = getReplicateClient();
+
+  for (let i = 0; i < MAX_POLL_ATTEMPTS; i++) {
+    const prediction = await replicate.predictions.get(predictionId);
+
+    if (prediction.status === "succeeded" || prediction.status === "failed") {
+      return prediction as unknown as PredictionResult;
+    }
+
+    if (prediction.status === "canceled") {
+      throw new Error("Preview generation was canceled");
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+  }
+
+  throw new Error("Preview generation timed out");
+}
+
 export async function generatePreviewImage(
   prompt: string,
   characterSheetUrl: string
@@ -46,24 +66,4 @@ export async function generatePreviewImage(
   }
 
   return output as string;
-}
-
-async function pollPrediction(predictionId: string): Promise<PredictionResult> {
-  const replicate = getReplicateClient();
-
-  for (let i = 0; i < MAX_POLL_ATTEMPTS; i++) {
-    const prediction = await replicate.predictions.get(predictionId);
-
-    if (prediction.status === "succeeded" || prediction.status === "failed") {
-      return prediction as unknown as PredictionResult;
-    }
-
-    if (prediction.status === "canceled") {
-      throw new Error("Preview generation was canceled");
-    }
-
-    await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
-  }
-
-  throw new Error("Preview generation timed out");
 }

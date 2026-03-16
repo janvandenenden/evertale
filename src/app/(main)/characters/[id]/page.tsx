@@ -3,6 +3,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { notFound, redirect } from "next/navigation";
 import { CharacterPreviewPanel } from "@/components/character/character-preview-panel";
 import { CharacterActions } from "@/components/character/character-actions";
+import { buildScenesWithTemplateFallback } from "@/lib/prompts/story-scene";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -59,11 +60,17 @@ export default async function CharacterPage({ params }: PageProps) {
     .eq("character_version_id", id)
     .order("phase");
 
-  const { data: scenes } = await supabase
+  const { data: scenesFromDb } = await supabase
     .from("character_version_scenes")
     .select("scene_id, image_url")
     .eq("character_version_id", id)
     .order("scene_id");
+
+  const allScenes = buildScenesWithTemplateFallback(
+    story.slug,
+    scenesFromDb ?? []
+  );
+  const scenes = allScenes.filter((s) => s.scene_id === "cover");
 
   return (
     <main className="flex-1">

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStripeClient } from "@/lib/stripe/client";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { triggerPostReservationGeneration } from "@/lib/admin/post-reservation-generation";
 import type { ProductType } from "@/lib/types";
 
 export async function POST(request: NextRequest) {
@@ -74,6 +75,27 @@ export async function POST(request: NextRequest) {
         { error: "Failed to create order" },
         { status: 500 }
       );
+    }
+
+    const { data: child } = await supabase
+      .from("children")
+      .select("name")
+      .eq("id", metadata.child_id)
+      .single();
+
+    const { data: story } = await supabase
+      .from("stories")
+      .select("slug")
+      .eq("id", metadata.story_id)
+      .single();
+
+    if (child && story) {
+      triggerPostReservationGeneration(
+        supabase,
+        metadata.character_version_id as string,
+        child.name,
+        story.slug
+      ).catch(() => {});
     }
   }
 
