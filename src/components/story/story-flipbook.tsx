@@ -57,7 +57,7 @@ export function StoryFlipbook({ images }: StoryFlipbookProps) {
           </div>
         </div>
 
-        <div className="flex w-full items-center justify-between gap-3 px-1">
+        <div className="flex w-full shrink-0 items-center justify-between gap-3 px-1">
           <Button
             variant="ghost"
             size="icon"
@@ -68,23 +68,9 @@ export function StoryFlipbook({ images }: StoryFlipbookProps) {
             <ChevronLeft className="size-5" />
           </Button>
 
-          <div className="flex min-w-0 flex-1 items-center justify-center gap-1.5">
-            {images.map((_, i) => {
-              return (
-                <button
-                  type="button"
-                  key={i}
-                  onClick={() => setCurrentPage(i)}
-                  aria-label={`Go to story page ${i + 1}`}
-                  className={`block h-1.5 rounded-full transition-all ${
-                    i === currentPage
-                      ? "w-4 bg-pop"
-                      : "w-1.5 bg-muted-foreground/30"
-                  }`}
-                />
-              );
-            })}
-          </div>
+          <span className="min-w-0 flex-1 text-center text-sm text-muted-foreground">
+            {currentPage + 1} of {totalPages}
+          </span>
 
           <Button
             variant="ghost"
