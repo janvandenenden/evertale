@@ -1,5 +1,38 @@
 # Evertale Development Log
 
+## 2026-03-16 — Single source for scene templates, display fallback, remove sheet selector
+
+- Single source: getMomotaroTemplateUrl, getMomotaroTemplateUrlForSceneId, getMomotaroSceneTemplateUrlsOrdered, MOMOTARO_COVER_TEMPLATE_URL in story-assets
+- first-story, admin client use story-assets; momotaro config uses MOMOTARO_COVER_TEMPLATE_URL
+- buildScenesWithTemplateFallback: character page shows template for scenes 1-4 when not in character_version_scenes
+- Removed character sheet selector; createOrGetWorkspace auto-picks cover-phase sheet
+
+## 2026-03-16 — Character pipeline: sheets + cover only (no story scenes)
+
+- Intent: story scenes are generated manually (admin) or after reservation, not during character creation
+- Removed story scene generation loop from run-character-pipeline.ts
+- Pipeline now only generates: character sheets (baby, child), cover image
+
+## 2026-03-16 — Per-step retry for character pipeline
+
+- Intent: handle transient failures (Replicate 503, network) without failing the whole pipeline
+- New `src/lib/retry.ts`: withRetry() with exponential backoff (3 attempts, 2s base delay)
+- Wrapped generateImage, generateSceneImage, downloadImage in run-character-pipeline with withRetry
+- Pipeline-level retry (2 attempts) still in place as fallback
+
+## 2026-03-16 — Admin story scene generator
+
+- Intent: admin page to generate and promote story panels (cover + 27 Momotaro scenes) with character sheets, per-panel reroll, and promotion to character_version_scenes
+- Normalized `stories/momotaro/prompts.md` into typed modules: `src/lib/story-assets/momotaro/` (types, references, scenes), `src/lib/prompts/story-scene.ts`
+- New Supabase migration `003_admin_story_scene_workspace.sql`: `admin_story_scene_workspaces`, `admin_story_scene_generations` tables
+- New `src/lib/replicate/generate-story-scene.ts`: per-panel generation with R2 persistence and admin workspace records
+- New admin page `src/app/(main)/admin/story-scenes/`: story/character sheet selector, workspace, scene grid with generate/reroll/promote, Generate all button, review queue
+- New API route `POST /api/admin/generate-scene` for single-panel generation
+- Admin auth: `ADMIN_CLERK_USER_IDS` env (comma-separated), `/admin` protected in middleware
+- Promotion: upsert approved panel into `character_version_scenes`
+- Post-reservation trigger: `ENABLE_POST_RESERVATION_GENERATION` env (default off); when on, Stripe webhook triggers generation after order creation
+- Updated `MOMOTARO_CONFIG` to use full 27-scene definitions from story-assets; pipeline uses `buildStoryScenePrompt` for Momotaro scenes
+
 ## 2026-03-15 — Story preview carousel
 
 - Intent: replace the page-flip story preview with a simpler, more reliable carousel after the flipbook UX showed empty opening pages and mobile overflow

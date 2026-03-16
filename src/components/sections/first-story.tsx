@@ -1,34 +1,5 @@
 import { StoryFlipbook } from "@/components/story/story-flipbook";
-
-const MOMOTARO_PAGES: string[] = [
-  "/momotaro/example-panels/1-river-introduction.jpeg",
-  "/momotaro/example-panels/2-peach-appears.jpeg",
-  "/momotaro/example-panels/3-carry-peach.jpeg",
-  "/momotaro/example-panels/4-examine-peach.jpeg",
-  "/momotaro/example-panels/5-peach-opens-b.jpeg",
-  "/momotaro/example-panels/6-couple-hold-child.jpeg",
-  "/momotaro/example-panels/7-getting-strong.jpeg",
-  "/momotaro/example-panels/8-learning-about-ogres.jpeg",
-  "/momotaro/example-panels/9-declaring-quest .jpeg",
-  "/momotaro/example-panels/10-preparing-dumplings.jpeg",
-  "/momotaro/example-panels/11-leaving-home.jpeg",
-  "/momotaro/example-panels/12-meeting-the-dog.jpeg",
-  "/momotaro/example-panels/13-sharing-the-dumpling.jpeg",
-  "/momotaro/example-panels/14-monkey-joins.jpeg",
-  "/momotaro/example-panels/15-monkey-get-dumpling.jpeg",
-  "/momotaro/example-panels/16-phaesant-joins.jpeg",
-  "/momotaro/example-panels/17-phaesant-gets-dumpling.jpeg",
-  "/momotaro/example-panels/18-looking-at-island-b.jpeg",
-  "/momotaro/example-panels/19-boat-journey.jpeg",
-  "/momotaro/example-panels/20-ogre-fortress-b.jpeg",
-  "/momotaro/example-panels/21-ogre-infiltration-c.jpeg",
-  "/momotaro/example-panels/22-battle-scene.jpeg",
-  "/momotaro/example-panels/23-ogres-surrender.jpeg",
-  "/momotaro/example-panels/24-take-treasure.jpeg",
-  "/momotaro/example-panels/25-saying-goodbye.jpeg",
-  "/momotaro/example-panels/26-celebration.jpeg",
-  "/momotaro/example-panels/27-peaceful-ending-b.jpeg",
-];
+import { getMomotaroSceneTemplateUrlsOrdered } from "@/lib/story-assets/momotaro";
 
 export function FirstStory() {
   return (
@@ -58,7 +29,7 @@ export function FirstStory() {
             </p>
           </div>
 
-          <StoryFlipbook images={MOMOTARO_PAGES} />
+          <StoryFlipbook images={getMomotaroSceneTemplateUrlsOrdered()} />
         </div>
       </div>
     </section>

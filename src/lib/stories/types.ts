@@ -7,8 +7,10 @@ export interface StorySheetPhase {
 
 export interface StoryScene {
   id: string;
+  page: number;
   phase: StoryPhase;
   templateUrl: string;
+  title?: string;
 }
 
 export interface StoryConfig {
