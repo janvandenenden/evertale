@@ -1,5 +1,12 @@
 # Evertale Development Log
 
+## 2026-03-15 — Story preview carousel
+
+- Intent: replace the page-flip story preview with a simpler, more reliable carousel after the flipbook UX showed empty opening pages and mobile overflow
+- Updated `src/components/story/story-flipbook.tsx` to render a single 5:4 image at a time with previous/next controls and direct dot navigation
+- Result: the first drawing is visible immediately, the preview stays within its container on mobile, and the preview can render larger on desktop without book-spread layout issues
+- Removed the unused `react-pageflip` dependency from `package.json` and `package-lock.json`
+
 ## 2026-03-15 — Multi-phase character sheets
 
 - Intent: support multiple character sheets per story (baby, child phases), story-driven config, R2 layout by story
@@ -181,3 +188,28 @@ All routes compile and build successfully.
 - Reverted `src/components/character/reserve-cta.tsx` from direct Stripe redirects back to package-selection links into `/checkout`
 - Removed the `Change package` back-link from `src/components/checkout/checkout-form.tsx` and updated Stripe `cancel_url` in `src/app/checkout/actions.ts` to return to the same checkout selection state
 - Redirected completed `src/app/characters/[id]/page.tsx` requests into the default checkout route so the purchase flow has a single canonical URL
+
+## 2026-03-16 — Reading moment responsive layout
+
+- Reworked `src/components/sections/reading-moment.tsx` into a simpler mobile-first layout with a full-width image on top and the text in the standard page container underneath
+- Changed the desktop layout to a clean `2/5` image and `3/5` content split so the image anchors the left side of the section more predictably
+
+## 2026-03-16 — Footer mobile spacing refresh
+
+- Reworked `src/components/layout/site-footer.tsx` into a tighter mobile-first footer with a single grouped panel instead of separate floating rows
+- Changed the footer nav to stacked pill links on mobile and a more compact inline treatment on larger screens to reduce empty space and improve visual balance
+
+## 2026-03-16 — Footer layout rethink
+
+- Reworked `src/components/layout/site-footer.tsx` again to follow a cleaner two-row footer structure closer to the provided reference while keeping Evertale's actual navigation
+- Replaced the card-like mobile treatment with a flatter divided layout that uses primary app links on the first row and homepage section links on the second row
+
+## 2026-03-16 — Auth-aware navigation
+
+- Updated `src/components/layout/site-header.tsx` so signed-out users no longer see `Dashboard`, while `Create` opens Clerk sign-in and then continues to `/create`
+- Updated `src/components/layout/site-footer.tsx` to follow the same auth-aware navigation rules so footer links do not send signed-out users into protected-route errors
+
+## 2026-03-16 — Mobile menu uses shadcn Sheet
+
+- Added `src/components/ui/sheet.tsx` using a standard shadcn-style sheet wrapper built on the repo's existing Radix dialog primitives
+- Refactored `src/components/layout/site-header.tsx` so the mobile navigation now opens in a full-height right-side sheet with stronger visibility and internal scrolling
