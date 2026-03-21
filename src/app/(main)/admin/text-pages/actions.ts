@@ -13,9 +13,9 @@ export async function listTextPageImages(
 ): Promise<ActionResult<R2Object[]>> {
   try {
     const objects = await listR2Objects(`${storySlug}/text-pages/`);
-    const images = objects.filter((obj) =>
-      /\.(jpg|jpeg|png|webp)$/i.test(obj.key)
-    );
+    const images = objects
+      .filter((obj) => /\.(jpg|jpeg|png|webp)$/i.test(obj.key))
+      .sort((a, b) => a.key.localeCompare(b.key, undefined, { numeric: true }));
     return { success: true, data: images };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
