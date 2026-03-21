@@ -1480,9 +1480,7 @@ climbing a nearby rock, listening.
 Pheasant:
 perched nearby, listening.
 
-3 Ogres:
-large figures holding clubs
-on the lookout
+3 Ogres on the lookout
 expressions angry and defensive.
 
 Environment:
