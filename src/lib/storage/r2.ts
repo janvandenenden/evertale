@@ -7,7 +7,7 @@ import {
 
 let client: S3Client | null = null;
 
-function getR2Client(): S3Client {
+export function getR2Client(): S3Client {
   if (client) return client;
 
   const accountId = process.env.R2_ACCOUNT_ID;
@@ -27,13 +27,13 @@ function getR2Client(): S3Client {
   return client;
 }
 
-function getBucketName(): string {
+export function getBucketName(): string {
   const bucket = process.env.R2_BUCKET_NAME;
   if (!bucket) throw new Error("Missing R2_BUCKET_NAME");
   return bucket;
 }
 
-function getPublicUrl(): string {
+export function getPublicUrl(): string {
   const url = process.env.R2_PUBLIC_URL;
   if (!url) throw new Error("Missing R2_PUBLIC_URL");
   return url;
