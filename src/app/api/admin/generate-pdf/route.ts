@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { isAdminClerkUserId } from "@/lib/admin";
 import { generateInteriorPdf } from "@/lib/pdf/generate-interior";
+import { uploadToR2 } from "@/lib/storage/r2";
 import { z } from "zod";
 
 const requestSchema = z.object({
@@ -33,12 +34,17 @@ export async function POST(request: NextRequest) {
       .toLowerCase();
     const filename = `momotaro-interior-${sanitizedName}.pdf`;
 
+    // Upload to R2 for Lulu validation
+    const r2Key = `admin/pdfs/${parsed.data.characterVersionId}/${filename}`;
+    const r2Url = await uploadToR2(r2Key, pdfBytes, "application/pdf");
+
     return new NextResponse(Buffer.from(pdfBytes), {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
         "Content-Disposition": `attachment; filename="${filename}"`,
         "Content-Length": String(pdfBytes.length),
+        "X-R2-Url": r2Url,
       },
     });
   } catch (err) {

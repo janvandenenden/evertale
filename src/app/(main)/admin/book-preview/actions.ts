@@ -3,10 +3,14 @@
 import { auth } from "@clerk/nextjs/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { isAdminClerkUserId } from "@/lib/admin";
-import { MOMOTARO_SCENES } from "@/lib/story-assets/momotaro/scenes";
+import {
+  MOMOTARO_SCENES,
+  getMomotaroTemplateUrl,
+} from "@/lib/story-assets/momotaro";
 import { momotaroTextPages } from "@/lib/story-assets/momotaro/text-pages";
 import { momotaroTextPageTemplates } from "@/lib/story-assets/momotaro/text-page-templates";
 import { getPublicUrl } from "@/lib/storage/r2";
+import type { TextBox, FontConfig, TextAlign, TextVAlign } from "@/lib/text-pages/types";
 import type { ActionResult } from "@/lib/types";
 
 async function requireAdmin(): Promise<{ clerkUserId: string }> {
@@ -63,13 +67,23 @@ export async function getCharacterVersions(): Promise<
   };
 }
 
+export interface TextTemplateData {
+  textBox: TextBox;
+  align: TextAlign;
+  valign: TextVAlign;
+  font: FontConfig;
+  maxLines: number;
+}
+
 export interface SpreadData {
   page: number;
   sceneId: string;
   sceneTitle: string;
   sceneImageUrl: string | null;
+  hasProtagonist: boolean;
   textPageImageUrl: string | null;
   textPageTemplateConfigured: boolean;
+  textTemplate: TextTemplateData | null;
   text: string;
 }
 
@@ -110,15 +124,31 @@ export async function getBookSpreads(
     const textEntry = momotaroTextPages.find((t) => t.page === scene.page);
     const template = templateByPage.get(scene.page);
 
+    // Scenes without a protagonist use the static template image.
+    // Scenes with a protagonist need a promoted (generated) image.
+    const sceneImageUrl = scene.hasProtagonist
+      ? sceneMap.get(scene.id) ?? null
+      : getMomotaroTemplateUrl(scene.filename);
+
     return {
       page: scene.page,
       sceneId: scene.id,
       sceneTitle: scene.title,
-      sceneImageUrl: sceneMap.get(scene.id) ?? null,
+      sceneImageUrl,
+      hasProtagonist: scene.hasProtagonist,
       textPageImageUrl: template
         ? `${r2Base}/${template.imageKey}`
         : null,
       textPageTemplateConfigured: !!template,
+      textTemplate: template
+        ? {
+            textBox: template.textBox,
+            align: template.align,
+            valign: template.valign,
+            font: template.font,
+            maxLines: template.maxLines,
+          }
+        : null,
       text: textEntry?.text ?? "",
     };
   });

@@ -40,6 +40,12 @@ export const SOURCE_IMAGE_ASPECT = 5 / 4; // 1.25
  * Returns the y-offset (negative, since the image is taller than the page
  * at full width) and the drawn height.
  */
+/**
+ * Lulu POD Package ID for the final book:
+ * 11x8.5 in, Full Color, Premium, Casewrap (hardcover), 80# Coated White, Matte, no linen, no foil.
+ */
+export const LULU_POD_PACKAGE_ID = "1100X0850.FC.PRE.CO.080CW444.MXX";
+
 export function imageDrawLayout(): {
   drawWidth: number;
   drawHeight: number;

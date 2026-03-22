@@ -1,7 +1,10 @@
 import { PDFDocument } from "pdf-lib";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getFromR2 } from "@/lib/storage/r2";
-import { MOMOTARO_SCENES } from "@/lib/story-assets/momotaro/scenes";
+import {
+  MOMOTARO_SCENES,
+  getMomotaroTemplateUrl,
+} from "@/lib/story-assets/momotaro";
 import { momotaroTextPages } from "@/lib/story-assets/momotaro/text-pages";
 import { momotaroTextPageTemplates } from "@/lib/story-assets/momotaro/text-page-templates";
 import { embedFonts, registerFontkit } from "./font-loader";
@@ -15,6 +18,15 @@ const DEFAULT_IMAGE_NATURAL_WIDTH = 1024;
 
 function contentTypeFromKey(key: string): string {
   if (key.endsWith(".png")) return "image/png";
+  return "image/jpeg";
+}
+
+/** Detect image format from the first bytes (magic number). */
+function detectContentType(bytes: Uint8Array): string {
+  // PNG: 89 50 4E 47
+  if (bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47) {
+    return "image/png";
+  }
   return "image/jpeg";
 }
 
@@ -73,14 +85,24 @@ async function fetchSceneImages(
 
 /**
  * Download an image from a URL and return its bytes.
+ * Retries up to 3 times to handle transient SSL/network errors.
  */
 async function fetchImageBytes(url: string): Promise<Uint8Array> {
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch image: ${url} (${response.status})`);
+  const maxRetries = 3;
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch image: ${url} (${response.status})`);
+      }
+      const buffer = await response.arrayBuffer();
+      return new Uint8Array(buffer);
+    } catch (err) {
+      if (attempt === maxRetries) throw err;
+      await new Promise((r) => setTimeout(r, 500 * attempt));
+    }
   }
-  const buffer = await response.arrayBuffer();
-  return new Uint8Array(buffer);
+  throw new Error(`Failed to fetch image after ${maxRetries} retries: ${url}`);
 }
 
 /**
@@ -117,19 +139,27 @@ export async function generateInteriorPdf(
 
   // Process each page sequentially to manage memory
   for (const scene of MOMOTARO_SCENES) {
-    const sceneImageUrl = sceneImageMap.get(scene.id);
-    if (!sceneImageUrl) {
-      throw new Error(
-        `No promoted scene image for "${scene.id}" (page ${scene.page}). ` +
-          `Promote it in the admin story scenes page first.`
-      );
+    // Scenes without a protagonist use the static template image directly.
+    // Scenes with a protagonist require a promoted (generated) image.
+    let sceneImageUrl: string;
+
+    if (scene.hasProtagonist) {
+      const promoted = sceneImageMap.get(scene.id);
+      if (!promoted) {
+        throw new Error(
+          `No promoted scene image for "${scene.id}" (page ${scene.page}). ` +
+            `Promote it in the admin story scenes page first.`
+        );
+      }
+      sceneImageUrl = promoted;
+    } else {
+      // Use the template image from R2
+      sceneImageUrl = getMomotaroTemplateUrl(scene.filename);
     }
 
     // Render scene page
     const sceneBytes = await fetchImageBytes(sceneImageUrl);
-    const sceneContentType = sceneImageUrl.endsWith(".png")
-      ? "image/png"
-      : "image/jpeg";
+    const sceneContentType = detectContentType(sceneBytes);
     await renderScenePage(pdfDoc, sceneBytes, sceneContentType);
 
     // Render text page
@@ -147,7 +177,7 @@ export async function generateInteriorPdf(
 
     // Fetch text page background image from R2
     const bgBytes = await getFromR2(template.imageKey);
-    const bgContentType = contentTypeFromKey(template.imageKey);
+    const bgContentType = detectContentType(bgBytes);
 
     // Get the font for this template
     const font = fontMap.get(template.font.family);

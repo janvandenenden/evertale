@@ -90,14 +90,21 @@ export function fitText(
   return { fontSize: Math.round(bestSize), lines: bestLines };
 }
 
-/** Canvas-based measureWidth for browser use. */
-export function createCanvasMeasureWidth(): MeasureWidth {
+/**
+ * Canvas-based measureWidth for browser use.
+ * Optionally accepts a font resolver to map template font names
+ * (e.g. "serif") to actual loaded font names (e.g. "Lora").
+ */
+export function createCanvasMeasureWidth(
+  resolveFont?: (family: string) => string
+): MeasureWidth {
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Canvas 2D context unavailable");
 
   return (text: string, fontSize: number, fontFamily: string) => {
-    ctx.font = `${fontSize}px ${fontFamily}`;
+    const resolved = resolveFont ? resolveFont(fontFamily) : fontFamily;
+    ctx.font = `${fontSize}px ${resolved}`;
     return ctx.measureText(text).width;
   };
 }

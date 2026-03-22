@@ -10,6 +10,7 @@ import { join } from "path";
 const FONT_FILE_MAP: Record<string, string> = {
   Nunito: "Nunito-Regular.ttf",
   Lora: "Lora-Regular.ttf",
+  serif: "Lora-Regular.ttf",
 };
 
 const fontsDir = join(process.cwd(), "src", "assets", "fonts");

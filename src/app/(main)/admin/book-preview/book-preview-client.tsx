@@ -1,12 +1,19 @@
 "use client";
 
-import { useState, useCallback, useTransition } from "react";
+import { useState, useCallback, useTransition, useMemo, useEffect, useRef } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { TextBoxOverlay } from "@/components/text-pages/text-box-overlay";
+import {
+  fitText,
+  createCanvasMeasureWidth,
+  type MeasureWidth,
+} from "@/lib/text-pages/fit-text";
+import { resolveCanvasFontFamily } from "@/lib/text-pages/font-family";
 import {
   getBookSpreads,
   type CharacterVersionOption,
@@ -28,6 +35,48 @@ export function BookPreviewClient({
   const [isLoading, startTransition] = useTransition();
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pdfR2Url, setPdfR2Url] = useState<string | null>(null);
+  const [isValidating, setIsValidating] = useState(false);
+  const [validationResult, setValidationResult] = useState<{
+    status: string;
+    errors: string[];
+    pageCount: string | null;
+    validPodPackageIds: string[];
+  } | null>(null);
+
+  // Track text page image natural + displayed dimensions for text fitting
+  const [naturalDimensions, setNaturalDimensions] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
+  const [displayedDimensions, setDisplayedDimensions] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
+  const textImgRef = useRef<HTMLImageElement>(null);
+  const measureWidthRef = useRef<MeasureWidth | null>(null);
+
+  useEffect(() => {
+    measureWidthRef.current = createCanvasMeasureWidth(resolveCanvasFontFamily);
+  }, []);
+
+  // Track displayed image size with ResizeObserver
+  useEffect(() => {
+    const img = textImgRef.current;
+    if (!img) return;
+
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        if (width > 0 && height > 0) {
+          setDisplayedDimensions({ width, height });
+        }
+      }
+    });
+
+    observer.observe(img);
+    return () => observer.disconnect();
+  }, [currentPage, spreads]);
 
   const loadSpreads = useCallback(
     (version: CharacterVersionOption) => {
@@ -51,8 +100,13 @@ export function BookPreviewClient({
       (v) => v.characterVersionId === e.target.value
     );
     setSelectedVersion(version ?? null);
+    setValidationResult(null);
     if (version) {
       loadSpreads(version);
+      const saved = localStorage.getItem(`pdf-r2-url:${version.characterVersionId}`);
+      setPdfR2Url(saved);
+    } else {
+      setPdfR2Url(null);
     }
   };
 
@@ -61,6 +115,8 @@ export function BookPreviewClient({
 
     setIsGenerating(true);
     setError(null);
+    setPdfR2Url(null);
+    setValidationResult(null);
 
     try {
       const response = await fetch("/api/admin/generate-pdf", {
@@ -76,6 +132,16 @@ export function BookPreviewClient({
       if (!response.ok) {
         const data = await response.json();
         throw new Error(data.error ?? "PDF generation failed");
+      }
+
+      // Capture R2 URL for Lulu validation
+      const r2Url = response.headers.get("X-R2-Url");
+      if (r2Url) {
+        setPdfR2Url(r2Url);
+        localStorage.setItem(
+          `pdf-r2-url:${selectedVersion.characterVersionId}`,
+          r2Url
+        );
       }
 
       // Trigger browser download
@@ -97,16 +163,95 @@ export function BookPreviewClient({
     }
   };
 
+  const handleValidatePdf = async () => {
+    if (!pdfR2Url) return;
+
+    setIsValidating(true);
+    setError(null);
+    setValidationResult(null);
+
+    try {
+      // Start validation
+      const startRes = await fetch("/api/admin/validate-pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sourceUrl: pdfR2Url }),
+      });
+
+      if (!startRes.ok) {
+        const data = await startRes.json();
+        throw new Error(data.error ?? "Validation request failed");
+      }
+
+      const validation = await startRes.json();
+      let result = validation;
+
+      // Poll until validation completes (status starts as null, then VALIDATING, then final)
+      while (result.status !== "VALIDATED" && result.status !== "ERROR") {
+        await new Promise((r) => setTimeout(r, 2000));
+        const pollRes = await fetch(
+          `/api/admin/validate-pdf?validationId=${result.id}`
+        );
+        if (!pollRes.ok) {
+          const data = await pollRes.json();
+          throw new Error(data.error ?? "Validation poll failed");
+        }
+        result = await pollRes.json();
+      }
+
+      setValidationResult({
+        status: result.status,
+        errors: result.errors ?? [],
+        pageCount: result.page_count ?? null,
+        validPodPackageIds: result.valid_pod_package_ids ?? [],
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Validation failed");
+    } finally {
+      setIsValidating(false);
+    }
+  };
+
   const currentSpread = spreads[currentPage];
   const personalizedText = currentSpread
     ? currentSpread.text.replace(/\{\{name\}\}/g, childName || "{{name}}")
     : "";
+
+  // Fit text using the same algorithm as the text-page editor
+  const fitResult = useMemo(() => {
+    const template = currentSpread?.textTemplate;
+    if (!template || !naturalDimensions || !measureWidthRef.current) {
+      return null;
+    }
+
+    const boxWidthPx = naturalDimensions.width * template.textBox.wPct;
+    const boxHeightPx = naturalDimensions.height * template.textBox.hPct;
+
+    return fitText(
+      personalizedText,
+      boxWidthPx,
+      boxHeightPx,
+      template.font,
+      template.maxLines,
+      measureWidthRef.current
+    );
+  }, [personalizedText, naturalDimensions, currentSpread?.textTemplate]);
+
+  // Scale factor: natural image size -> displayed size
+  const displayScale = useMemo(() => {
+    if (!naturalDimensions || !displayedDimensions) return 1;
+    return displayedDimensions.width / naturalDimensions.width;
+  }, [naturalDimensions, displayedDimensions]);
 
   // Count readiness
   const configuredTemplates = spreads.filter(
     (s) => s.textPageTemplateConfigured
   ).length;
   const availableScenes = spreads.filter((s) => s.sceneImageUrl).length;
+  const protagonistScenes = spreads.filter((s) => s.hasProtagonist);
+  const promotedProtagonistScenes = protagonistScenes.filter(
+    (s) => s.sceneImageUrl
+  ).length;
   const allReady =
     spreads.length > 0 &&
     configuredTemplates === spreads.length &&
@@ -165,8 +310,8 @@ export function BookPreviewClient({
         <Card>
           <CardContent className="flex items-center justify-between py-4">
             <div className="flex gap-4">
-              <Badge variant={availableScenes === spreads.length ? "default" : "secondary"}>
-                Scenes: {availableScenes}/{spreads.length}
+              <Badge variant={promotedProtagonistScenes === protagonistScenes.length ? "default" : "secondary"}>
+                Promoted scenes: {promotedProtagonistScenes}/{protagonistScenes.length}
               </Badge>
               <Badge
                 variant={
@@ -178,12 +323,56 @@ export function BookPreviewClient({
                 Text templates: {configuredTemplates}/{spreads.length}
               </Badge>
             </div>
-            <Button
-              onClick={handleGeneratePdf}
-              disabled={!allReady || isGenerating || !childName.trim()}
-            >
-              {isGenerating ? "Generating PDF..." : "Generate Interior PDF"}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={handleGeneratePdf}
+                disabled={!allReady || isGenerating || !childName.trim()}
+              >
+                {isGenerating ? "Generating PDF..." : "Generate Interior PDF"}
+              </Button>
+              {pdfR2Url && (
+                <Button
+                  variant="outline"
+                  onClick={handleValidatePdf}
+                  disabled={isValidating}
+                >
+                  {isValidating ? "Validating..." : "Validate with Lulu"}
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Lulu validation result */}
+      {validationResult && (
+        <Card>
+          <CardContent className="py-4 space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">Lulu validation:</span>
+              <Badge
+                variant={validationResult.status === "VALIDATED" ? "default" : "destructive"}
+              >
+                {validationResult.status}
+              </Badge>
+              {validationResult.pageCount && (
+                <span className="text-sm text-muted-foreground">
+                  {validationResult.pageCount} pages detected
+                </span>
+              )}
+            </div>
+            {validationResult.errors.length > 0 && (
+              <ul className="list-disc pl-5 text-sm text-destructive">
+                {validationResult.errors.map((e, i) => (
+                  <li key={i}>{e}</li>
+                ))}
+              </ul>
+            )}
+            {validationResult.validPodPackageIds.length > 0 && (
+              <div className="text-sm text-muted-foreground">
+                Valid POD packages: {validationResult.validPodPackageIds.join(", ")}
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
@@ -237,13 +426,15 @@ export function BookPreviewClient({
                     />
                   ) : (
                     <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-                      No scene image promoted
+                      {currentSpread.hasProtagonist
+                        ? "No promoted scene image"
+                        : "Template image not found"}
                     </div>
                   )}
                 </div>
               </div>
 
-              {/* Text page */}
+              {/* Text page with accurate text overlay */}
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <p className="text-sm font-medium">Text page</p>
@@ -254,19 +445,40 @@ export function BookPreviewClient({
                 <div className="relative aspect-[5/4] overflow-hidden rounded-lg border bg-muted">
                   {currentSpread.textPageImageUrl ? (
                     <>
-                      <Image
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        ref={textImgRef}
                         src={currentSpread.textPageImageUrl}
                         alt={`Text page ${currentSpread.page}`}
-                        fill
-                        className="object-cover"
-                        sizes="(max-width: 768px) 100vw, 50vw"
+                        className="h-full w-full object-cover"
+                        onLoad={(e) => {
+                          const img = e.currentTarget;
+                          setNaturalDimensions({
+                            width: img.naturalWidth,
+                            height: img.naturalHeight,
+                          });
+                          setDisplayedDimensions({
+                            width: img.clientWidth,
+                            height: img.clientHeight,
+                          });
+                        }}
                       />
-                      {/* Text overlay preview */}
-                      <div className="absolute inset-0 flex items-center justify-center p-8">
-                        <p className="text-center text-xs leading-relaxed text-stone-800/70">
-                          {personalizedText}
-                        </p>
-                      </div>
+                      {/* Accurate text overlay using TextBoxOverlay */}
+                      {currentSpread.textTemplate && fitResult && (
+                        <TextBoxOverlay
+                          textBox={currentSpread.textTemplate.textBox}
+                          onChange={() => {}}
+                          text={personalizedText}
+                          fontSize={fitResult.fontSize}
+                          displayScale={displayScale}
+                          lineHeight={currentSpread.textTemplate.font.lineHeight}
+                          fontFamily={currentSpread.textTemplate.font.family}
+                          fontColor={currentSpread.textTemplate.font.color}
+                          align={currentSpread.textTemplate.align}
+                          valign={currentSpread.textTemplate.valign}
+                          previewMode
+                        />
+                      )}
                     </>
                   ) : (
                     <div className="flex h-full items-center justify-center p-4 text-center text-sm text-muted-foreground">
@@ -318,10 +530,12 @@ export function BookPreviewClient({
                       {spread.page}
                     </div>
                   )}
-                  {(!spread.sceneImageUrl ||
+                  {((spread.hasProtagonist && !spread.sceneImageUrl) ||
                     !spread.textPageTemplateConfigured) && (
                     <div className="absolute bottom-0 left-0 right-0 bg-destructive/80 px-1 py-0.5 text-center text-[10px] text-destructive-foreground">
-                      {!spread.sceneImageUrl ? "No scene" : "No template"}
+                      {spread.hasProtagonist && !spread.sceneImageUrl
+                        ? "No scene"
+                        : "No template"}
                     </div>
                   )}
                 </button>

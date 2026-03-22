@@ -11,6 +11,7 @@ import type {
   TextPageEntry,
 } from "@/lib/text-pages/types";
 import { fitText, createCanvasMeasureWidth, type MeasureWidth } from "@/lib/text-pages/fit-text";
+import { resolveCanvasFontFamily } from "@/lib/text-pages/font-family";
 import { ImagePicker } from "@/components/text-pages/image-picker";
 import { TextBoxOverlay } from "@/components/text-pages/text-box-overlay";
 import { TypographyControls } from "@/components/text-pages/typography-controls";
@@ -71,7 +72,7 @@ export function TextPageEditorClient({
   const imgRef = useRef<HTMLImageElement>(null);
 
   useEffect(() => {
-    measureWidthRef.current = createCanvasMeasureWidth();
+    measureWidthRef.current = createCanvasMeasureWidth(resolveCanvasFontFamily);
   }, []);
 
   // Track displayed image size with ResizeObserver
