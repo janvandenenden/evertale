@@ -4,6 +4,8 @@ import {
   DeleteObjectCommand,
   GetObjectCommand,
 } from "@aws-sdk/client-s3";
+import { NodeHttpHandler } from "@smithy/node-http-handler";
+import { Agent } from "https";
 
 let client: S3Client | null = null;
 
@@ -22,6 +24,9 @@ export function getR2Client(): S3Client {
     region: "auto",
     endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
     credentials: { accessKeyId, secretAccessKey },
+    requestHandler: new NodeHttpHandler({
+      httpsAgent: new Agent({ keepAlive: false }),
+    }),
   });
 
   return client;

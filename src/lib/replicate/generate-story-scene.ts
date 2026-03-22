@@ -82,9 +82,7 @@ export async function generateStoryScenePanel(
     );
 
     const buffer = await downloadImage(tempUrl);
-    const key = buildAdminSceneStorageKey(workspaceId, sceneId, {
-      stable: true,
-    });
+    const key = buildAdminSceneStorageKey(workspaceId, sceneId);
     const imageUrl = await uploadToR2(key, buffer, "image/png");
 
     const { error: updateError } = await supabase

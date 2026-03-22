@@ -2,6 +2,7 @@
 
 import { useCallback, useRef } from "react";
 import type { TextBox, TextAlign, TextVAlign } from "@/lib/text-pages/types";
+import { resolveCssFontFamily } from "@/lib/text-pages/font-family";
 
 interface TextBoxOverlayProps {
   readonly textBox: TextBox;
@@ -218,7 +219,7 @@ export function TextBoxOverlay({
           style={{
             fontSize: `${fontSize * displayScale}px`,
             lineHeight: lineHeight,
-            fontFamily,
+            fontFamily: resolveCssFontFamily(fontFamily),
             color: fontColor,
             textAlign: textAlignStyle,
             wordWrap: "break-word",

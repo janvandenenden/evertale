@@ -135,7 +135,9 @@ drawn as a blank graphite outline placeholder character with no facial features 
 
 Environment:
 low wooden table${styleSuffix}`,
-    fillOutOverride: { expression: "calm wonder, newly revealed, gentle neutral curiosity" },
+    fillOutOverride: {
+      expression: "calm wonder, newly revealed, gentle neutral curiosity",
+    },
   },
   {
     page: 6,
@@ -243,7 +245,9 @@ tatami floor mats
 low wooden table
 paper sliding doors behind them
 warm lantern light illuminating the room.${styleSuffix}`,
-    fillOutOverride: { expression: "attentive, serious curiosity, focused listening" },
+    fillOutOverride: {
+      expression: "attentive, serious curiosity, focused listening",
+    },
   },
   {
     page: 9,
@@ -342,7 +346,10 @@ expression proud.
 Environment:
 grass and stone path leading from the house
 fields and hills behind the village.${styleSuffix}`,
-    fillOutOverride: { expression: "confident, brave, slightly tender/emotional" },
+    fillOutOverride: {
+      expression:
+        "confident, brave, slightly tender/emotional, face to camera, walking away from house",
+    },
   },
   {
     page: 12,
@@ -561,7 +568,10 @@ Environment:
 rocky shoreline with waves
 wide ocean view
 dark rocky island with fortress visible in the distance.${styleSuffix}`,
-    fillOutOverride: { expression: "serious, determined, slightly awed, looking away from camera" },
+    fillOutOverride: {
+      expression:
+        "serious, determined, slightly awed, looking away from camera",
+    },
   },
   {
     page: 19,
@@ -807,7 +817,9 @@ flying upward into the canopy.
 Environment:
 bamboo and pine trees surrounding the path
 soft sunlight filtering through leaves.${styleSuffix}`,
-    fillOutOverride: { expression: "peaceful, content, safe, looking at animals" },
+    fillOutOverride: {
+      expression: "peaceful, content, safe, looking at animals",
+    },
   },
   {
     page: 26,
@@ -839,7 +851,9 @@ celebrating around them.
 
 Environment:
 lanterns glowing around the village.${styleSuffix}`,
-    fillOutOverride: { expression: "peaceful, content, safe, happy, celebrating" },
+    fillOutOverride: {
+      expression: "peaceful, content, safe, happy, celebrating",
+    },
   },
   {
     page: 27,
