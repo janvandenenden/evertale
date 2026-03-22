@@ -136,3 +136,57 @@ export async function getCoverDimensions(
     unit: data.unit,
   };
 }
+
+export interface ValidateCoverResult {
+  id: number;
+  source_url: string;
+  errors: string[] | null;
+  status: "NORMALIZING" | "NORMALIZED" | "ERROR" | null;
+}
+
+export async function validateCover(
+  sourceUrl: string,
+  podPackageId: string,
+  interiorPageCount: number
+): Promise<ValidateCoverResult> {
+  const token = await getAccessToken();
+
+  const response = await fetch(`${LULU_API_BASE}/validate-cover/`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      "Cache-Control": "no-cache",
+    },
+    body: JSON.stringify({
+      source_url: sourceUrl,
+      pod_package_id: podPackageId,
+      interior_page_count: interiorPageCount,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Lulu validate-cover failed: ${response.status} ${await response.text()}`);
+  }
+
+  return response.json();
+}
+
+export async function getCoverValidationStatus(
+  validationId: number
+): Promise<ValidateCoverResult> {
+  const token = await getAccessToken();
+
+  const response = await fetch(`${LULU_API_BASE}/validate-cover/${validationId}/`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Cache-Control": "no-cache",
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Lulu get cover validation failed: ${response.status} ${await response.text()}`);
+  }
+
+  return response.json();
+}

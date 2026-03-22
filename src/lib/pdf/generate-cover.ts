@@ -183,14 +183,16 @@ export async function generateCoverPdf(
   });
 
   // -- Spine (center): title text rotated 90 degrees --
+  // Lulu recommends: no spine text if spine < 0.5 in (~36pt)
+  // For thin spines, just leave it blank.
   const spineX = BLEED_PT + layout.panelTrimWidth;
-  const spineCenterX = spineX + layout.spineWidth / 2;
-  const spineCenterY = layout.pageHeight / 2;
 
-  const spineTitle = `Momotaro - The Peach Boy`;
-  const spineFontSize = Math.min(layout.spineWidth * 0.5, 12);
+  if (layout.spineWidth >= 36) {
+    const spineCenterX = spineX + layout.spineWidth / 2;
+    const spineCenterY = layout.pageHeight / 2;
+    const spineTitle = "Momotaro - The Peach Boy";
+    const spineFontSize = Math.min(layout.spineWidth * 0.6, 14);
 
-  if (spineFontSize >= 6) {
     const spineTextWidth = font.widthOfTextAtSize(spineTitle, spineFontSize);
     page.drawText(spineTitle, {
       x: spineCenterX + spineFontSize * 0.35,

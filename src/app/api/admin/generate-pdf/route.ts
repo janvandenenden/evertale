@@ -45,6 +45,7 @@ export async function POST(request: NextRequest) {
         "Content-Disposition": `attachment; filename="${filename}"`,
         "Content-Length": String(pdfBytes.length),
         "X-R2-Url": r2Url,
+        "Access-Control-Expose-Headers": "X-R2-Url",
       },
     });
   } catch (err) {
