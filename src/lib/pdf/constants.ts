@@ -46,6 +46,9 @@ export const SOURCE_IMAGE_ASPECT = 5 / 4; // 1.25
  */
 export const LULU_POD_PACKAGE_ID = "1100X0850.FC.PRE.CO.080CW444.MXX";
 
+/** Total interior pages: 27 scenes + 27 text pages. */
+export const INTERIOR_PAGE_COUNT = 54;
+
 export function imageDrawLayout(): {
   drawWidth: number;
   drawHeight: number;

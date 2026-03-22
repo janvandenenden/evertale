@@ -93,3 +93,46 @@ export async function getValidationStatus(
 
   return response.json();
 }
+
+export interface CoverDimensions {
+  width: number;
+  height: number;
+  unit: string;
+}
+
+/**
+ * Get the exact cover PDF dimensions from Lulu for a given book configuration.
+ * Returns width and height in the requested unit (defaults to points).
+ */
+export async function getCoverDimensions(
+  podPackageId: string,
+  interiorPageCount: number,
+  unit: "pt" | "mm" | "inch" = "pt"
+): Promise<CoverDimensions> {
+  const token = await getAccessToken();
+
+  const response = await fetch(`${LULU_API_BASE}/cover-dimensions/`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      "Cache-Control": "no-cache",
+    },
+    body: JSON.stringify({
+      pod_package_id: podPackageId,
+      interior_page_count: interiorPageCount,
+      unit,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Lulu cover-dimensions failed: ${response.status} ${await response.text()}`);
+  }
+
+  const data = await response.json();
+  return {
+    width: parseFloat(data.width),
+    height: parseFloat(data.height),
+    unit: data.unit,
+  };
+}

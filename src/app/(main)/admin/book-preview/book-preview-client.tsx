@@ -34,6 +34,7 @@ export function BookPreviewClient({
   const [childName, setChildName] = useState("");
   const [isLoading, startTransition] = useTransition();
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isGeneratingCover, setIsGeneratingCover] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pdfR2Url, setPdfR2Url] = useState<string | null>(null);
   const [isValidating, setIsValidating] = useState(false);
@@ -212,6 +213,46 @@ export function BookPreviewClient({
     }
   };
 
+  const handleGenerateCover = async () => {
+    if (!selectedVersion || !childName.trim()) return;
+
+    setIsGeneratingCover(true);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/admin/generate-cover", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          characterVersionId: selectedVersion.characterVersionId,
+          childName: childName.trim(),
+          storySlug: selectedVersion.storySlug,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error ?? "Cover PDF generation failed");
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download =
+        response.headers.get("Content-Disposition")?.match(/filename="(.+)"/)?.[1] ??
+        "cover.pdf";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Cover PDF generation failed");
+    } finally {
+      setIsGeneratingCover(false);
+    }
+  };
+
   const currentSpread = spreads[currentPage];
   const personalizedText = currentSpread
     ? currentSpread.text.replace(/\{\{name\}\}/g, childName || "{{name}}")
@@ -329,6 +370,13 @@ export function BookPreviewClient({
                 disabled={!allReady || isGenerating || !childName.trim()}
               >
                 {isGenerating ? "Generating PDF..." : "Generate Interior PDF"}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleGenerateCover}
+                disabled={!allReady || isGeneratingCover || !childName.trim()}
+              >
+                {isGeneratingCover ? "Generating Cover..." : "Generate Cover PDF"}
               </Button>
               {pdfR2Url && (
                 <Button
