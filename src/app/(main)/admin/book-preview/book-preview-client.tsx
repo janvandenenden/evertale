@@ -37,12 +37,18 @@ export function BookPreviewClient({
   const [isGeneratingCover, setIsGeneratingCover] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pdfR2Url, setPdfR2Url] = useState<string | null>(null);
+  const [coverR2Url, setCoverR2Url] = useState<string | null>(null);
   const [isValidating, setIsValidating] = useState(false);
+  const [isValidatingCover, setIsValidatingCover] = useState(false);
   const [validationResult, setValidationResult] = useState<{
     status: string;
     errors: string[];
     pageCount: string | null;
     validPodPackageIds: string[];
+  } | null>(null);
+  const [coverValidationResult, setCoverValidationResult] = useState<{
+    status: string;
+    errors: string[];
   } | null>(null);
 
   // Track text page image natural + displayed dimensions for text fitting
@@ -102,12 +108,14 @@ export function BookPreviewClient({
     );
     setSelectedVersion(version ?? null);
     setValidationResult(null);
+    setCoverValidationResult(null);
     if (version) {
       loadSpreads(version);
-      const saved = localStorage.getItem(`pdf-r2-url:${version.characterVersionId}`);
-      setPdfR2Url(saved);
+      setPdfR2Url(localStorage.getItem(`pdf-r2-url:${version.characterVersionId}`));
+      setCoverR2Url(localStorage.getItem(`cover-r2-url:${version.characterVersionId}`));
     } else {
       setPdfR2Url(null);
+      setCoverR2Url(null);
     }
   };
 
@@ -218,6 +226,7 @@ export function BookPreviewClient({
 
     setIsGeneratingCover(true);
     setError(null);
+    setCoverValidationResult(null);
 
     try {
       const response = await fetch("/api/admin/generate-cover", {
@@ -235,6 +244,15 @@ export function BookPreviewClient({
         throw new Error(data.error ?? "Cover PDF generation failed");
       }
 
+      const r2Url = response.headers.get("X-R2-Url");
+      if (r2Url) {
+        setCoverR2Url(r2Url);
+        localStorage.setItem(
+          `cover-r2-url:${selectedVersion.characterVersionId}`,
+          r2Url
+        );
+      }
+
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -250,6 +268,50 @@ export function BookPreviewClient({
       setError(err instanceof Error ? err.message : "Cover PDF generation failed");
     } finally {
       setIsGeneratingCover(false);
+    }
+  };
+
+  const handleValidateCover = async () => {
+    if (!coverR2Url) return;
+
+    setIsValidatingCover(true);
+    setError(null);
+    setCoverValidationResult(null);
+
+    try {
+      const startRes = await fetch("/api/admin/validate-pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sourceUrl: coverR2Url, type: "cover" }),
+      });
+
+      if (!startRes.ok) {
+        const data = await startRes.json();
+        throw new Error(data.error ?? "Cover validation failed");
+      }
+
+      let result = await startRes.json();
+
+      while (result.status !== "NORMALIZED" && result.status !== "ERROR") {
+        await new Promise((r) => setTimeout(r, 2000));
+        const pollRes = await fetch(
+          `/api/admin/validate-pdf?validationId=${result.id}&type=cover`
+        );
+        if (!pollRes.ok) {
+          const data = await pollRes.json();
+          throw new Error(data.error ?? "Cover validation poll failed");
+        }
+        result = await pollRes.json();
+      }
+
+      setCoverValidationResult({
+        status: result.status,
+        errors: result.errors ?? [],
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Cover validation failed");
+    } finally {
+      setIsValidatingCover(false);
     }
   };
 
@@ -384,7 +446,16 @@ export function BookPreviewClient({
                   onClick={handleValidatePdf}
                   disabled={isValidating}
                 >
-                  {isValidating ? "Validating..." : "Validate with Lulu"}
+                  {isValidating ? "Validating..." : "Validate Interior"}
+                </Button>
+              )}
+              {coverR2Url && (
+                <Button
+                  variant="outline"
+                  onClick={handleValidateCover}
+                  disabled={isValidatingCover}
+                >
+                  {isValidatingCover ? "Validating..." : "Validate Cover"}
                 </Button>
               )}
             </div>
@@ -420,6 +491,29 @@ export function BookPreviewClient({
               <div className="text-sm text-muted-foreground">
                 Valid POD packages: {validationResult.validPodPackageIds.join(", ")}
               </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Cover validation result */}
+      {coverValidationResult && (
+        <Card>
+          <CardContent className="py-4 space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">Cover validation:</span>
+              <Badge
+                variant={coverValidationResult.status === "NORMALIZED" ? "default" : "destructive"}
+              >
+                {coverValidationResult.status}
+              </Badge>
+            </div>
+            {coverValidationResult.errors.length > 0 && (
+              <ul className="list-disc pl-5 text-sm text-destructive">
+                {coverValidationResult.errors.map((e, i) => (
+                  <li key={i}>{e}</li>
+                ))}
+              </ul>
             )}
           </CardContent>
         </Card>
