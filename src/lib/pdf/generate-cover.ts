@@ -1,12 +1,11 @@
 import { PDFDocument, rgb, degrees } from "pdf-lib";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { getCoverDimensions } from "@/lib/lulu/client";
 import { registerFontkit, embedFont } from "./font-loader";
 import {
-  LULU_POD_PACKAGE_ID,
-  INTERIOR_PAGE_COUNT,
   BLEED_PT,
-  TRIM_HEIGHT_PT,
+  COVER_WIDTH_PT,
+  COVER_HEIGHT_PT,
+  COVER_SPINE_PT,
   SOURCE_IMAGE_ASPECT,
 } from "./constants";
 
@@ -82,37 +81,21 @@ async function fetchImageBytes(url: string): Promise<Uint8Array> {
 }
 
 /**
- * Calculate the cover layout by querying Lulu's cover-dimensions API.
+ * Build the cover layout from Lulu's known casewrap cover dimensions.
  *
  * The total cover PDF is one wide page:
- *   [bleed + back cover + bleed] [spine] [bleed + front cover + bleed]
+ *   [bleed + back panel + spine + front panel + bleed]
  *
- * Lulu returns the total width and height including bleed.
- * The spine width = totalWidth - 2 * (panelTrimWidth + 2 * bleed).
- * panelTrimWidth is the same as the interior trim width (11 in = 792 pt).
+ * For casewrap hardcover, the cover panels are LARGER than the interior
+ * pages because the cover material wraps around case boards that extend
+ * beyond the text block. The dimensions come from Lulu's cover template
+ * requirements (COVER_SPECS in constants.ts).
  */
-export async function getCoverLayout(): Promise<CoverLayout> {
-  const dims = await getCoverDimensions(
-    LULU_POD_PACKAGE_ID,
-    INTERIOR_PAGE_COUNT,
-    "pt"
-  );
-
-  const pageWidth = dims.width;
-  const pageHeight = dims.height;
-
-  // Each panel has trim width = interior trim width (11 in).
-  // Total width = bleed + backTrim + bleed + spine + bleed + frontTrim + bleed
-  // But Lulu wraps it as: bleed + back + spine + front + bleed horizontally,
-  // with bleed on left and right edges only.
-  // Actually: totalWidth = 2*bleed + backTrim + spine + frontTrim + 2*...
-  // Let's derive spine from the known values:
-  // panelTrimWidth = LULU_SPECS.trimWidthIn * 72 = 792
-  const panelTrimWidth = 792; // 11 inches in points
-  // pageHeight = trimHeight + 2*bleed
-  // pageWidth = 2*bleed + backTrim + spine + frontTrim
-  // => spine = pageWidth - 2*bleed - 2*panelTrimWidth
-  const spineWidth = pageWidth - 2 * BLEED_PT - 2 * panelTrimWidth;
+export function getCoverLayout(): CoverLayout {
+  const pageWidth = COVER_WIDTH_PT;
+  const pageHeight = COVER_HEIGHT_PT;
+  const spineWidth = COVER_SPINE_PT;
+  const panelTrimWidth = (pageWidth - 2 * BLEED_PT - spineWidth) / 2;
 
   return { pageWidth, pageHeight, spineWidth, panelTrimWidth };
 }
@@ -130,8 +113,8 @@ export async function generateCoverPdf(
 ): Promise<Uint8Array> {
   const { characterVersionId, childName } = input;
 
-  // Get cover layout from Lulu
-  const layout = await getCoverLayout();
+  // Get cover layout from Lulu casewrap specs
+  const layout = getCoverLayout();
 
   // Fetch cover image
   const coverImageUrl = await fetchCoverImageUrl(characterVersionId);
